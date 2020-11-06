@@ -1,3 +1,4 @@
+// +heroku goVersion go1.13
 module myapp
 
 go 1.13
