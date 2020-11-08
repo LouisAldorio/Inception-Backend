@@ -30,7 +30,6 @@ func Middleware() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authToken := r.Header.Get("Authorization")
 
-			fmt.Println(authToken)
 
 			// Allow unauthenticated users in
 			if authToken == "" {
@@ -51,8 +50,6 @@ func Middleware() func(http.Handler) http.Handler {
 				http.Error(w, "Invalid token", http.StatusForbidden)
 				return
 			}
-
-			fmt.Println(claims.Username)
 
 			//get user dataclaims
 			username := fmt.Sprintf("%v", claims.Username)

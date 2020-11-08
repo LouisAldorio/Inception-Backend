@@ -42,12 +42,12 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 	//get user from mongoDB where username
 
 	//dummy data
-	// user = model.User{
-	// 	Username: "felixyangsen",
-	// 	Email: "felix@inception.com",
-	// 	Role: "reseller",
-	// 	HashedPassword: "$2a$04$Z5soW8sJwwch2NjbwnV4aeTR.aEnzHHOI9DtMq/RRITxX3d0JWbzS",
-	// }
+	user = model.User{
+		Username: "felixyangsen",
+		Email: "felix@inception.com",
+		Role: "reseller",
+		HashedPassword: "$2a$04$Z5soW8sJwwch2NjbwnV4aeTR.aEnzHHOI9DtMq/RRITxX3d0JWbzS",
+	}
 
 	if user.Username == "" {
 		return nil, gqlerror.Errorf("%s", "user not found")
