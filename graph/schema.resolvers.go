@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
+	"myapp/utils"
 )
 
 func (r *mutationResolver) User(ctx context.Context) (*model.UserOps, error) {
@@ -15,7 +16,10 @@ func (r *mutationResolver) User(ctx context.Context) (*model.UserOps, error) {
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	user := utils.ForContext(ctx)
+	fmt.Println(user.Username)
+
+	return nil, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

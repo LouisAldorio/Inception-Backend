@@ -5,18 +5,17 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
 )
 
-func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*model.User, error) {
-	return service.Register(ctx, input), nil
+func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (string, error) {
+	return service.Register(ctx, input)
 }
 
-func (r *userOpsResolver) Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *userOpsResolver) Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.LoginResponse, error) {
+	return service.Login(ctx, input)
 }
 
 // UserOps returns generated.UserOpsResolver implementation.

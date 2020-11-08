@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 	"myapp/graph/model"
 	"net/http"
 )
@@ -17,10 +18,7 @@ func GetUserByUsername(username string) (*model.User, error) {
 
 	user = &model.User{
 		Email:    "louisaldorio@gmail.com",
-		ID:       1,
-		Password: "lengkong123",
 		Role:     "distributor",
-		Token:    "temp",
 		Username: "louisaldorio",
 	}
 
@@ -30,35 +28,44 @@ func GetUserByUsername(username string) (*model.User, error) {
 func Middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			header := r.Header.Get("Authorization")
+			authToken := r.Header.Get("Authorization")
+
+			fmt.Println(authToken)
 
 			// Allow unauthenticated users in
-			if header == "" {
+			if authToken == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
 
 			//validate jwt token
-			tokenStr := header
-			username, err := ValidateToken(tokenStr)
+			jwtToken, err := ValidateToken(authToken)
 			if err != nil {
 				http.Error(w, "Invalid token", http.StatusForbidden)
 				return
 			}
 
-			// create user and check if user exists in db
+			//validate claim
+			claims, ok := jwtToken.Claims.(*UserClaim)
+			if !ok && !jwtToken.Valid {
+				http.Error(w, "Invalid token", http.StatusForbidden)
+				return
+			}
+
+			fmt.Println(claims.Username)
+
+			//get user dataclaims
+			username := fmt.Sprintf("%v", claims.Username)
 			user, err := GetUserByUsername(username)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
 			}
 
-			// put it in context
+			//return user data to req
 			ctx := context.WithValue(r.Context(), userCtxKey, &user)
-
-			// and call the next with our new context
-			r = r.WithContext(ctx)
-			next.ServeHTTP(w, r)
+			reqWithCtx := r.WithContext(ctx)
+			next.ServeHTTP(w, reqWithCtx)
 		})
 	}
 }

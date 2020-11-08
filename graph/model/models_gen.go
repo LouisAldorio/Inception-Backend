@@ -2,6 +2,11 @@
 
 package model
 
+type LoginResponse struct {
+	AccessToken string `json:"access_token"`
+	User        *User  `json:"user"`
+}
+
 type LoginUser struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -16,15 +21,13 @@ type NewUser struct {
 }
 
 type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
-	Token    string `json:"token"`
+	Username       string `json:"username"`
+	Email          string `json:"email"`
+	Role           string `json:"role"`
+	HashedPassword string `json:"hashed_password"`
 }
 
 type UserOps struct {
-	Register *User `json:"register"`
-	Login    *User `json:"login"`
+	Register string         `json:"register"`
+	Login    *LoginResponse `json:"login"`
 }

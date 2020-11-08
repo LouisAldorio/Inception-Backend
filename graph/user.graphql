@@ -1,10 +1,8 @@
 type User {
-    id: ID!
     username: String!
     email: String!
-    password: String!
     role: String!
-    token: String!
+    hashed_password: String!
 }
 
 input NewUser {
@@ -20,7 +18,12 @@ input LoginUser {
     password: String! 
 }
 
+type LoginResponse {
+    access_token: String!
+    user: User!
+}
+
 type UserOps {
-    register(input: NewUser!): User! @goField(forceResolver:true)
-    login(input: LoginUser!): User! @goField(forceResolver:true)
+    register(input: NewUser!): String! @goField(forceResolver:true)
+    login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
 }
