@@ -12,6 +12,7 @@ import (
 func ValidateInput(ctx context.Context, input model.NewUser)(bool,error) {
 
 	totalErrors := 0
+	var err error
 
 	if len(strings.TrimSpace(input.Email)) == 0 {
 		graphql.AddError(ctx, &gqlerror.Error{
@@ -41,8 +42,15 @@ func ValidateInput(ctx context.Context, input model.NewUser)(bool,error) {
 		totalErrors++
 	}
 
+	if len(strings.TrimSpace(input.Role)) == 0{
+		graphql.AddError(ctx, &gqlerror.Error{
+			Message: "Choose one Role!",
+		})
+		totalErrors++
+	}
+
 	if totalErrors > 0{
-		return false,nil
+		return false,err
 	}
 
 	return true,nil

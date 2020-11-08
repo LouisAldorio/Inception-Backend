@@ -12,9 +12,9 @@ import (
 
 //Register User
 func Register(ctx context.Context, input model.NewUser) (string, error) {
-	isValid, _ := utils.ValidateInput(ctx, input)
+	isValid,err := utils.ValidateInput(ctx, input)
 	if !isValid {
-		return "", gqlerror.Errorf("%s", "input validation error")
+		return "", err
 	}
 
 	user := &model.User{
