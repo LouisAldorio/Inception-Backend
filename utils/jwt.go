@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"myapp/graph/model"
-	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -15,7 +14,7 @@ type UserClaim struct {
 	jwt.StandardClaims
 }
 
-var jwtKey = []byte(os.Getenv("JWT_KEY"))
+var jwtKey = []byte("secret")
 
 func CreateToken(user model.User) (string, error) {
 	var signingMethod = jwt.SigningMethodHS256
