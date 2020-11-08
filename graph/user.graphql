@@ -1,0 +1,26 @@
+type User {
+    id: ID!
+    username: String!
+    email: String!
+    password: String!
+    role: String!
+    token: String!
+}
+
+input NewUser {
+    username: String!
+    email: String!
+    password: String!   
+    role: String!
+    confirm_password: String!
+}
+
+input LoginUser {
+    username: String!
+    password: String! 
+}
+
+type UserOps {
+    register(input: NewUser!): User! @goField(forceResolver:true)
+    login(input: LoginUser!): User! @goField(forceResolver:true)
+}

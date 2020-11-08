@@ -8,14 +8,13 @@ import (
 	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
-	"myapp/service"
 )
 
-func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*string, error) {
-	return service.Register(), nil
+func (r *mutationResolver) User(ctx context.Context) (*model.UserOps, error) {
+	return &model.UserOps{}, nil
 }
 
-func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
+func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

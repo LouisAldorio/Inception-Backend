@@ -2,13 +2,42 @@ package service
 
 import (
 	"fmt"
-	"myapp/config"
+	"log"
+	"myapp/graph/model"
+	"myapp/utils"
+
+	"context"
 )
 
-func Register() *string{
-	client := config.MongodbConnect()
-	collection := client.Database("Inception").Collection("Users")
+//Register User
+func Register(ctx context.Context, input model.NewUser) *model.User {
 
-	fmt.Println(collection)
-	return nil
+	temp := utils.ForContext(ctx)
+	fmt.Println(temp)
+
+	var user *model.User
+	// client := config.MongodbConnect()
+	// collection := client.Database("Inception").Collection("Users")
+
+	isValid, err := utils.ValidateInput(ctx, input)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if isValid {
+		token, err := utils.CreateToken(input.Username, input.Password)
+		if err != nil {
+			log.Println(err)
+		}
+		user = &model.User{
+			Email:    input.Email,
+			Password: input.Password,
+			Role:     input.Role,
+			Username: input.Username,
+			Token:    token,
+		}
+	}
+	return user
 }
+
+

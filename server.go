@@ -4,11 +4,13 @@ import (
 	"log"
 	"myapp/graph"
 	"myapp/graph/generated"
+	"myapp/utils"
 	"net/http"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
 )
 
 const defaultPort = "8085"
@@ -18,6 +20,10 @@ func main() {
 	if port == "" {
 		port = defaultPort
 	}
+
+	router := chi.NewRouter()
+
+	router.Use(utils.Middleware())
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
 
