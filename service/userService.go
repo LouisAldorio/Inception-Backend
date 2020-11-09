@@ -2,65 +2,82 @@ package service
 
 import (
 	"fmt"
+	"log"
+	"myapp/config"
 	"myapp/graph/model"
 	"myapp/utils"
 
 	"context"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 //Register User
 func Register(ctx context.Context, input model.NewUser) (string, error) {
-	isValid,err := utils.ValidateInput(ctx, input)
+	
+	isValid, err := utils.ValidateInput(ctx, input)
 	if !isValid {
 		return "", err
 	}
 
-	user := &model.User{
-		Email:          input.Email,
-		Role:           input.Role,
-		Username:       input.Username,
-		HashedPassword: utils.HashPassword(input.Password),
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Users")
+
+	findOptions := options.FindOneOptions{}	
+
+	cur := collection.FindOne(ctx, bson.M{"username": input.Username}, &findOptions)
+	if cur.Err() == nil {
+		return "" ,gqlerror.Errorf("%s", "User has been registered!")
 	}
 
-	// client := config.MongodbConnect()
-	// collection := client.Database("Inception").Collection("Users")
-
-	//insert to mongoDB
-	fmt.Println(user)
+	_, mongoInsertErr := collection.InsertOne(ctx, bson.D{
+		{"email", input.Email},
+		{"username", input.Username},
+		{"password", utils.HashPassword(input.Password)},
+		{"role", input.Role},
+	})
+	if mongoInsertErr != nil {
+		log.Println(err)
+	}
 
 	return fmt.Sprintf("%s", "Registration success"), nil
 }
 
 func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, error) {
-	var user model.User
+	var user bson.M
 
-	// client := config.MongodbConnect()
-	// collection := client.Database("Inception").Collection("Users")
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Users")
 
 	//get user from mongoDB where username
-
-	//dummy data
-	user = model.User{
-		Username: "felixyangsen",
-		Email: "felix@inception.com",
-		Role: "reseller",
-		HashedPassword: "$2a$04$Z5soW8sJwwch2NjbwnV4aeTR.aEnzHHOI9DtMq/RRITxX3d0JWbzS",
+	findOptions := options.FindOneOptions{}		
+	
+	cur := collection.FindOne(ctx, bson.M{"username": input.Username}, &findOptions)
+	if cur.Err() != nil {
+		return nil ,gqlerror.Errorf("%s", "User not found!")
+	}
+	err := cur.Decode(&user)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	if user.Username == "" {
-		return nil, gqlerror.Errorf("%s", "user not found")
-	}
-
-	if isValid := utils.CheckPassword(user.HashedPassword, input.Password); !isValid {
+	if isValid := utils.CheckPassword(user["password"].(string), input.Password); !isValid {
 		return nil, gqlerror.Errorf("%s", "Incorrect username or password")
 	}
 
-	accessToken, _ := utils.CreateToken(user)
+	accessToken, _ := utils.CreateToken(user["username"].(string))
+
+	loggedInUser := model.User{
+		Email:          user["email"].(string),
+		HashedPassword: user["password"].(string),
+		Role:           user["role"].(string),
+		Username:       user["username"].(string),
+	}
 
 	return &model.LoginResponse{
 		AccessToken: accessToken,
-		User:        &user,
+		User:        &loggedInUser,
 	}, nil
 }

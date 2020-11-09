@@ -29,7 +29,7 @@ func ConnectDB() *gorm.DB {
 }
 
 func MongodbConnect() *mongo.Client {
-	clientOptions := options.Client().ApplyURI("mongodb+srv://admin-louis:Test-123@inception.my7v9.mongodb.net/Inception?retryWrites=true&w=majority") // Connect to //MongoDB
+	clientOptions := options.Client().ApplyURI("mongodb+srv://admin-louis:test123@inception.my7v9.mongodb.net/Inception?retryWrites=true&w=majority") // Connect to //MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Fatal(err)
