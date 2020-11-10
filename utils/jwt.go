@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"myapp/graph/model"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -16,12 +15,12 @@ type UserClaim struct {
 
 var jwtKey = []byte("secret")
 
-func CreateToken(user model.User) (string, error) {
+func CreateToken(username string) (string, error) {
 	var signingMethod = jwt.SigningMethodHS256
 	var expiredTime = time.Now().AddDate(0, 1, 0).UnixNano() / int64(time.Millisecond)
 
 	customClaim := UserClaim{
-		Username: user.Username,
+		Username: username,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expiredTime,
 		},
