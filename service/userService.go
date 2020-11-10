@@ -16,7 +16,7 @@ import (
 
 //Register User
 func Register(ctx context.Context, input model.NewUser) (string, error) {
-	
+
 	isValid, err := utils.ValidateInput(ctx, input)
 	if !isValid {
 		return "", err
@@ -25,11 +25,11 @@ func Register(ctx context.Context, input model.NewUser) (string, error) {
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Users")
 
-	findOptions := options.FindOneOptions{}	
+	findOptions := options.FindOneOptions{}
 
 	cur := collection.FindOne(ctx, bson.M{"username": input.Username}, &findOptions)
 	if cur.Err() == nil {
-		return "" ,gqlerror.Errorf("%s", "User has been registered!")
+		return "", gqlerror.Errorf("%s", "User has been registered!")
 	}
 
 	_, mongoInsertErr := collection.InsertOne(ctx, bson.D{
@@ -52,11 +52,11 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 	collection := client.Database("Inception").Collection("Users")
 
 	//get user from mongoDB where username
-	findOptions := options.FindOneOptions{}		
-	
+	findOptions := options.FindOneOptions{}
+
 	cur := collection.FindOne(ctx, bson.M{"username": input.Username}, &findOptions)
 	if cur.Err() != nil {
-		return nil ,gqlerror.Errorf("%s", "User not found!")
+		return nil, gqlerror.Errorf("%s", "User not found!")
 	}
 	err := cur.Decode(&user)
 	if err != nil {
@@ -67,14 +67,14 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 		return nil, gqlerror.Errorf("%s", "Incorrect username or password")
 	}
 
-	accessToken, _ := utils.CreateToken(user["username"].(string))
-
 	loggedInUser := model.User{
 		Email:          user["email"].(string),
 		HashedPassword: user["password"].(string),
 		Role:           user["role"].(string),
 		Username:       user["username"].(string),
 	}
+
+	accessToken, _ := utils.CreateToken(loggedInUser)
 
 	return &model.LoginResponse{
 		AccessToken: accessToken,

@@ -30,7 +30,6 @@ func Middleware() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authToken := r.Header.Get("Authorization")
 
-
 			// Allow unauthenticated users in
 			if authToken == "" {
 				next.ServeHTTP(w, r)
