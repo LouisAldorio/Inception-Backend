@@ -23,6 +23,7 @@ func CreateToken(user model.User) (string, error) {
 
 	customClaim := UserClaim{
 		Username: user.Username,
+		Role: user.Role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expiredTime,
 		},
