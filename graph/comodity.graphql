@@ -1,0 +1,18 @@
+type Comodity {
+    name: String!
+    image: String!
+    unit_price: Float!
+    unit_type: String!
+    min_purchase: String!    
+    description: String
+    user: User!
+    created_at: String!
+    updated_at: String
+}
+
+type ComodityPagination {
+    limit: Int
+    page: Int
+    total_item: Int! @goField(forceResolver: true)
+    nodes: [Comodity!]! @goField(forceResolver: true)
+}

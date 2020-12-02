@@ -22,6 +22,13 @@ func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	return nil, nil
 }
 
+func (r *queryResolver) Comodities(ctx context.Context, limit *int, page *int) (*model.ComodityPagination, error) {
+	return &model.ComodityPagination{
+		Limit: limit,
+		Page:  page,
+	}, nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

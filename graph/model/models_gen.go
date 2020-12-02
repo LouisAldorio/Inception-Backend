@@ -2,6 +2,13 @@
 
 package model
 
+type ComodityPagination struct {
+	Limit     *int        `json:"limit"`
+	Page      *int        `json:"page"`
+	TotalItem int         `json:"total_item"`
+	Nodes     []*Comodity `json:"nodes"`
+}
+
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 	User        *User  `json:"user"`
@@ -13,18 +20,20 @@ type LoginUser struct {
 }
 
 type NewUser struct {
-	Username        string `json:"username"`
-	Email           string `json:"email"`
-	Password        string `json:"password"`
-	Role            string `json:"role"`
-	ConfirmPassword string `json:"confirm_password"`
+	Username        string  `json:"username"`
+	Email           string  `json:"email"`
+	Role            string  `json:"role"`
+	WhatsappNumber  *string `json:"whatsapp_number"`
+	Password        string  `json:"password"`
+	ConfirmPassword string  `json:"confirm_password"`
 }
 
 type User struct {
-	Username       string `json:"username"`
-	Email          string `json:"email"`
-	Role           string `json:"role"`
-	HashedPassword string `json:"hashed_password"`
+	Username       string  `json:"username"`
+	Email          string  `json:"email"`
+	Role           string  `json:"role"`
+	WhatsappNumber *string `json:"whatsapp_number"`
+	HashedPassword string  `json:"hashed_password"`
 }
 
 type UserOps struct {

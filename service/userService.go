@@ -16,9 +16,7 @@ import (
 
 //Register User
 func Register(ctx context.Context, input model.NewUser) (string, error) {
-
-	isValid, err := utils.ValidateInput(ctx, input)
-	if !isValid {
+	if isValid, err := utils.ValidateInput(ctx, input); isValid {
 		return "", err
 	}
 
@@ -32,14 +30,15 @@ func Register(ctx context.Context, input model.NewUser) (string, error) {
 		return "", gqlerror.Errorf("%s", "User has been registered!")
 	}
 
-	_, mongoInsertErr := collection.InsertOne(ctx, bson.D{
+	_, err := collection.InsertOne(ctx, bson.D{
 		{"email", input.Email},
 		{"username", input.Username},
 		{"password", utils.HashPassword(input.Password)},
 		{"role", input.Role},
+		{"whatsapp_number", input.WhatsappNumber},
 	})
-	if mongoInsertErr != nil {
-		log.Println(err)
+	if err != nil {
+		return "", gqlerror.Errorf("Registration failed %s", err.Error())
 	}
 
 	return fmt.Sprintf("%s", "Registration success"), nil
@@ -72,6 +71,7 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 		HashedPassword: user["password"].(string),
 		Role:           user["role"].(string),
 		Username:       user["username"].(string),
+		WhatsappNumber: user["whatsapp_number"].(*string),
 	}
 
 	accessToken, _ := utils.CreateToken(loggedInUser)

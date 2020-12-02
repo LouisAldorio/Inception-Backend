@@ -2,14 +2,16 @@ type User {
     username: String!
     email: String!
     role: String!
+    whatsapp_number: String
     hashed_password: String!
 }
 
 input NewUser {
     username: String!
-    email: String!
-    password: String!   
+    email: String!  
     role: String!
+    whatsapp_number: String
+    password: String!   
     confirm_password: String!
 }
 
