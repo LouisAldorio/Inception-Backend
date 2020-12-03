@@ -9,6 +9,7 @@ import (
 
 	"context"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -66,18 +67,20 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 		return nil, gqlerror.Errorf("%s", "Incorrect username or password")
 	}
 
-	loggedInUser := model.User{
-		Email:          user["email"].(string),
-		HashedPassword: user["password"].(string),
-		Role:           user["role"].(string),
-		Username:       user["username"].(string),
-		WhatsappNumber: user["whatsapp_number"].(*string),
-	}
+	// loggedInUser := model.User{
+	// 	Email:          user["email"].(string),
+	// 	HashedPassword: user["password"].(string),
+	// 	Role:           user["role"].(string),
+	// 	Username:       user["username"].(string),
+	// 	WhatsappNumber: user["whatsapp_number"].(*string),
+	// }
+	var userJSON model.User
+	mapstructure.Decode(userJSON, &user)
 
-	accessToken, _ := utils.CreateToken(loggedInUser)
+	accessToken, _ := utils.CreateToken(userJSON)
 
 	return &model.LoginResponse{
 		AccessToken: accessToken,
-		User:        &loggedInUser,
+		User:        &userJSON,
 	}, nil
 }
