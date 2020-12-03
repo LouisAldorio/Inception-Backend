@@ -46,7 +46,7 @@ func Register(ctx context.Context, input model.NewUser) (string, error) {
 }
 
 func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, error) {
-	var user bson.M
+	var userJSON bson.M
 
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Users")
@@ -58,12 +58,12 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 	if cur.Err() != nil {
 		return nil, gqlerror.Errorf("%s", "User not found!")
 	}
-	err := cur.Decode(&user)
+	err := cur.Decode(&userJSON)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if isValid := utils.CheckPassword(user["password"].(string), input.Password); !isValid {
+	if isValid := utils.CheckPassword(userJSON["password"].(string), input.Password); !isValid {
 		return nil, gqlerror.Errorf("%s", "Incorrect username or password")
 	}
 
@@ -74,13 +74,13 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 	// 	Username:       user["username"].(string),
 	// 	WhatsappNumber: user["whatsapp_number"].(*string),
 	// }
-	var userJSON model.User
+	var user model.User
 	mapstructure.Decode(userJSON, &user)
 
-	accessToken, _ := utils.CreateToken(userJSON)
+	accessToken, _ := utils.CreateToken(user)
 
 	return &model.LoginResponse{
 		AccessToken: accessToken,
-		User:        &userJSON,
+		User:        &user,
 	}, nil
 }
