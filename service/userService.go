@@ -39,6 +39,7 @@ func Register(ctx context.Context, input model.NewUser) (string, error) {
 		{"whatsapp_number", input.WhatsappNumber},
 	})
 	if err != nil {
+		fmt.Println(err)
 		return "", gqlerror.Errorf("Registration failed %s", err.Error())
 	}
 
@@ -67,13 +68,6 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 		return nil, gqlerror.Errorf("%s", "Incorrect username or password")
 	}
 
-	// loggedInUser := model.User{
-	// 	Email:          user["email"].(string),
-	// 	HashedPassword: user["password"].(string),
-	// 	Role:           user["role"].(string),
-	// 	Username:       user["username"].(string),
-	// 	WhatsappNumber: user["whatsapp_number"].(*string),
-	// }
 	var user model.User
 	mapstructure.Decode(userJSON, &user)
 

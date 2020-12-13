@@ -44,12 +44,14 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 			Description: &temp,
 			MinPurchase: comodityJSON["min_purchase"].(string),
 			User:        &user,
-			// CreatedAt:   comodityJSON["created_at"].(string),
-			// UpdatedAt:   comodityJSON["updated_at"].(*string),
 		}
 
 		comodities = append(comodities, &comodity)
 	}
 
 	return comodities, nil
+}
+
+func CommodityCreate(){
+	
 }
