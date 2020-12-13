@@ -37,6 +37,6 @@ type User struct {
 }
 
 type UserOps struct {
-	Register string         `json:"register"`
+	Register *string        `json:"register"`
 	Login    *LoginResponse `json:"login"`
 }

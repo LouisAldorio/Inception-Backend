@@ -26,6 +26,6 @@ type LoginResponse {
 }
 
 type UserOps {
-    register(input: NewUser!): String! @goField(forceResolver:true)
+    register(input: NewUser!): String @goField(forceResolver:true)
     login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
 }

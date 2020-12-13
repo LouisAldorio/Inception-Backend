@@ -16,9 +16,10 @@ import (
 )
 
 //Register User
-func Register(ctx context.Context, input model.NewUser) (string, error) {
+func Register(ctx context.Context, input model.NewUser) (*string, error) {
 	if isValid, err := utils.ValidateInput(ctx, input); isValid {
-		return "", err
+		fmt.Println(err)
+		return nil, err
 	}
 
 	client := config.MongodbConnect()
@@ -28,7 +29,7 @@ func Register(ctx context.Context, input model.NewUser) (string, error) {
 
 	cur := collection.FindOne(ctx, bson.M{"username": input.Username}, &findOptions)
 	if cur.Err() == nil {
-		return "", gqlerror.Errorf("%s", "User has been registered!")
+		return nil, gqlerror.Errorf("%s", "User has been registered!")
 	}
 
 	_, err := collection.InsertOne(ctx, bson.D{
@@ -40,10 +41,12 @@ func Register(ctx context.Context, input model.NewUser) (string, error) {
 	})
 	if err != nil {
 		fmt.Println(err)
-		return "", gqlerror.Errorf("Registration failed %s", err.Error())
+		return nil, gqlerror.Errorf("Registration failed %s", err.Error())
 	}
 
-	return fmt.Sprintf("%s", "Registration success"), nil
+	response := fmt.Sprintf("%s", "Registration success")
+
+	return &response, nil
 }
 
 func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, error) {

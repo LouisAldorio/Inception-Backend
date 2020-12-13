@@ -104,7 +104,7 @@ type QueryResolver interface {
 	Comodities(ctx context.Context, limit *int, page *int) (*model.ComodityPagination, error)
 }
 type UserOpsResolver interface {
-	Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (string, error)
+	Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*string, error)
 	Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.LoginResponse, error)
 }
 
@@ -434,7 +434,7 @@ type LoginResponse {
 }
 
 type UserOps {
-    register(input: NewUser!): String! @goField(forceResolver:true)
+    register(input: NewUser!): String @goField(forceResolver:true)
     login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
 }`, BuiltIn: false},
 }
@@ -1451,14 +1451,11 @@ func (ec *executionContext) _UserOps_register(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserOps_login(ctx context.Context, field graphql.CollectedField, obj *model.UserOps) (ret graphql.Marshaler) {
@@ -2986,9 +2983,6 @@ func (ec *executionContext) _UserOps(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._UserOps_register(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "login":

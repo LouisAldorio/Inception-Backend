@@ -10,7 +10,7 @@ import (
 	"myapp/service"
 )
 
-func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (string, error) {
+func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*string, error) {
 	return service.Register(ctx, input)
 }
 
