@@ -34,12 +34,11 @@ func Register(ctx context.Context, input model.NewUser) (*string, error) {
 	_, err := collection.InsertOne(ctx, bson.D{
 		{"email", input.Email},
 		{"username", input.Username},
-		{"password", utils.HashPassword(input.Password)},
+		{"hashedPassword", utils.HashPassword(input.Password)},
 		{"role", input.Role},
-		{"whatsapp_number", input.WhatsappNumber},
+		{"whatsappNumber", input.WhatsappNumber},
 	})
 	if err != nil {
-		fmt.Println(err)
 		return nil, gqlerror.Errorf("Registration failed %s", err.Error())
 	}
 

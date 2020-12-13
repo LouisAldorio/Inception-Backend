@@ -5,9 +5,11 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
+	"myapp/utils"
 )
 
 func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*string, error) {
@@ -15,6 +17,8 @@ func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, inpu
 }
 
 func (r *userOpsResolver) Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.LoginResponse, error) {
+	user := utils.ForContext(ctx)
+	fmt.Println(user)
 	return service.Login(ctx, input)
 }
 

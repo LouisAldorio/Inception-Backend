@@ -29,11 +29,11 @@ type NewUser struct {
 }
 
 type User struct {
-	Username       string  `json:"username"`
-	Email          string  `json:"email"`
-	Role           string  `json:"role"`
-	WhatsappNumber *string `json:"whatsapp_number"`
-	HashedPassword string  `json:"hashed_password"`
+	Username       string `json:"username"`
+	Email          string `json:"email"`
+	Role           string `json:"role"`
+	WhatsappNumber string `json:"whatsapp_number"`
+	HashedPassword string `json:"hashed_password"`
 }
 
 type UserOps struct {

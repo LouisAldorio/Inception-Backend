@@ -410,7 +410,7 @@ type Query {
     username: String!
     email: String!
     role: String!
-    whatsapp_number: String
+    whatsapp_number: String!
     hashed_password: String!
 }
 
@@ -1377,11 +1377,14 @@ func (ec *executionContext) _User_whatsapp_number(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _User_hashed_password(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
@@ -2947,6 +2950,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "whatsapp_number":
 			out.Values[i] = ec._User_whatsapp_number(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "hashed_password":
 			out.Values[i] = ec._User_hashed_password(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

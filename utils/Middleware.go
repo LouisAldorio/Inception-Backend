@@ -16,10 +16,12 @@ type contextKey struct {
 func GetUserByUsername(username string) (*model.User, error) {
 	var user *model.User
 
+	temp := "082161723455"
 	user = &model.User{
 		Email:    "louisaldorio@gmail.com",
 		Role:     "distributor",
 		Username: "louisaldorio",
+		WhatsappNumber: temp,
 	}
 
 	return user, nil
