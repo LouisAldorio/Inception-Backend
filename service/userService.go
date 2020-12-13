@@ -17,8 +17,7 @@ import (
 
 //Register User
 func Register(ctx context.Context, input model.NewUser) (*string, error) {
-	if isValid, err := utils.ValidateInput(ctx, input); isValid {
-		fmt.Println(err)
+	if isValid, err := utils.ValidateInput(ctx, input); !isValid {
 		return nil, err
 	}
 
