@@ -15,6 +15,10 @@ func (r *mutationResolver) User(ctx context.Context) (*model.UserOps, error) {
 	return &model.UserOps{}, nil
 }
 
+func (r *mutationResolver) Commodity(ctx context.Context) (*model.CommodityOps, error) {
+	return &model.CommodityOps{},nil
+}
+
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {
 	user := utils.ForContext(ctx)
 	fmt.Println(user.Username)

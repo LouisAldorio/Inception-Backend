@@ -9,7 +9,15 @@ import (
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
+	"myapp/utils"
 )
+
+func (r *commodityOpsResolver) Create(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error) {
+	fmt.Println(ctx)
+	user := utils.ForContext(ctx)
+	fmt.Println(user)
+	return service.CommodityCreate(input, user), nil
+}
 
 func (r *comodityPaginationResolver) TotalItem(ctx context.Context, obj *model.ComodityPagination) (int, error) {
 	panic(fmt.Errorf("not implemented"))
@@ -19,9 +27,13 @@ func (r *comodityPaginationResolver) Nodes(ctx context.Context, obj *model.Comod
 	return service.ComodityGetList(ctx, obj.Limit, obj.Page)
 }
 
+// CommodityOps returns generated.CommodityOpsResolver implementation.
+func (r *Resolver) CommodityOps() generated.CommodityOpsResolver { return &commodityOpsResolver{r} }
+
 // ComodityPagination returns generated.ComodityPaginationResolver implementation.
 func (r *Resolver) ComodityPagination() generated.ComodityPaginationResolver {
 	return &comodityPaginationResolver{r}
 }
 
+type commodityOpsResolver struct{ *Resolver }
 type comodityPaginationResolver struct{ *Resolver }

@@ -2,6 +2,20 @@
 
 package model
 
+type CommodityOps struct {
+	Create *Comodity `json:"create"`
+}
+
+type Comodity struct {
+	Name        string    `json:"name"`
+	Image       []*string `json:"image"`
+	UnitPrice   string    `json:"unit_price"`
+	UnitType    string    `json:"unit_type"`
+	MinPurchase string    `json:"min_purchase"`
+	Description *string   `json:"description"`
+	User        *User     `json:"user"`
+}
+
 type ComodityPagination struct {
 	Limit     *int        `json:"limit"`
 	Page      *int        `json:"page"`
@@ -17,6 +31,15 @@ type LoginResponse struct {
 type LoginUser struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type NewComodity struct {
+	Name        string    `json:"name"`
+	MinPurchase string    `json:"min_purchase"`
+	UnitType    string    `json:"unit_type"`
+	UnitPrice   string    `json:"unit_price"`
+	Description string    `json:"description"`
+	Images      []*string `json:"images"`
 }
 
 type NewUser struct {
@@ -37,6 +60,6 @@ type User struct {
 }
 
 type UserOps struct {
-	Register *string        `json:"register"`
+	Register *LoginResponse `json:"register"`
 	Login    *LoginResponse `json:"login"`
 }

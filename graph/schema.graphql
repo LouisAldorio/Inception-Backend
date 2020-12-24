@@ -2,6 +2,7 @@ directive @goField(forceResolver: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEF
 
 type Mutation {
     user: UserOps! @goField(forceResolver:true)
+    commodity: CommodityOps! @goField(forceResolver:true)
 }
 
 type Query {

@@ -35,6 +35,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	CommodityOps() CommodityOpsResolver
 	ComodityPagination() ComodityPaginationResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -45,15 +46,17 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	CommodityOps struct {
+		Create func(childComplexity int, input *model.NewComodity) int
+	}
+
 	Comodity struct {
-		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		Image       func(childComplexity int) int
 		MinPurchase func(childComplexity int) int
 		Name        func(childComplexity int) int
 		UnitPrice   func(childComplexity int) int
 		UnitType    func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
 		User        func(childComplexity int) int
 	}
 
@@ -70,7 +73,8 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		User func(childComplexity int) int
+		Commodity func(childComplexity int) int
+		User      func(childComplexity int) int
 	}
 
 	Query struct {
@@ -92,19 +96,23 @@ type ComplexityRoot struct {
 	}
 }
 
+type CommodityOpsResolver interface {
+	Create(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error)
+}
 type ComodityPaginationResolver interface {
 	TotalItem(ctx context.Context, obj *model.ComodityPagination) (int, error)
 	Nodes(ctx context.Context, obj *model.ComodityPagination) ([]*model.Comodity, error)
 }
 type MutationResolver interface {
 	User(ctx context.Context) (*model.UserOps, error)
+	Commodity(ctx context.Context) (*model.CommodityOps, error)
 }
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
 	Comodities(ctx context.Context, limit *int, page *int) (*model.ComodityPagination, error)
 }
 type UserOpsResolver interface {
-	Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*string, error)
+	Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*model.LoginResponse, error)
 	Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.LoginResponse, error)
 }
 
@@ -123,12 +131,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Comodity.created_at":
-		if e.complexity.Comodity.CreatedAt == nil {
+	case "CommodityOps.create":
+		if e.complexity.CommodityOps.Create == nil {
 			break
 		}
 
-		return e.complexity.Comodity.CreatedAt(childComplexity), true
+		args, err := ec.field_CommodityOps_create_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.CommodityOps.Create(childComplexity, args["input"].(*model.NewComodity)), true
 
 	case "Comodity.description":
 		if e.complexity.Comodity.Description == nil {
@@ -171,13 +184,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Comodity.UnitType(childComplexity), true
-
-	case "Comodity.updated_at":
-		if e.complexity.Comodity.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.Comodity.UpdatedAt(childComplexity), true
 
 	case "Comodity.user":
 		if e.complexity.Comodity.User == nil {
@@ -227,6 +233,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.LoginResponse.User(childComplexity), true
+
+	case "Mutation.commodity":
+		if e.complexity.Mutation.Commodity == nil {
+			break
+		}
+
+		return e.complexity.Mutation.Commodity(childComplexity), true
 
 	case "Mutation.user":
 		if e.complexity.Mutation.User == nil {
@@ -379,14 +392,21 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 var sources = []*ast.Source{
 	{Name: "graph/comodity.graphql", Input: `type Comodity {
     name: String!
-    image: String!
-    unit_price: Float!
+    image: [String]!
+    unit_price: String!
     unit_type: String!
     min_purchase: String!    
     description: String
     user: User!
-    created_at: String!
-    updated_at: String
+}
+
+input NewComodity {
+    name: String!
+    min_purchase: String!
+    unit_type: String!
+    unit_price: String!
+    description: String!
+    images: [String]!
 }
 
 type ComodityPagination {
@@ -394,11 +414,16 @@ type ComodityPagination {
     page: Int
     total_item: Int! @goField(forceResolver: true)
     nodes: [Comodity!]! @goField(forceResolver: true)
+}
+
+type CommodityOps {
+    create(input: NewComodity): Comodity! @goField(forceResolver:true)
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphql", Input: `directive @goField(forceResolver: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type Mutation {
     user: UserOps! @goField(forceResolver:true)
+    commodity: CommodityOps! @goField(forceResolver:true)
 }
 
 type Query {
@@ -434,7 +459,7 @@ type LoginResponse {
 }
 
 type UserOps {
-    register(input: NewUser!): String @goField(forceResolver:true)
+    register(input: NewUser!): LoginResponse @goField(forceResolver:true)
     login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
 }`, BuiltIn: false},
 }
@@ -443,6 +468,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_CommodityOps_create_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.NewComodity
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalONewComodity2ᚖmyappᚋgraphᚋmodelᚐNewComodity(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -551,6 +591,48 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _CommodityOps_create(ctx context.Context, field graphql.CollectedField, obj *model.CommodityOps) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CommodityOps",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_CommodityOps_create_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.CommodityOps().Create(rctx, obj, args["input"].(*model.NewComodity))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Comodity)
+	fc.Result = res
+	return ec.marshalNComodity2ᚖmyappᚋgraphᚋmodelᚐComodity(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Comodity_name(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -616,9 +698,9 @@ func (ec *executionContext) _Comodity_image(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comodity_unit_price(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
@@ -651,9 +733,9 @@ func (ec *executionContext) _Comodity_unit_price(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comodity_unit_type(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
@@ -791,73 +873,6 @@ func (ec *executionContext) _Comodity_user(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖmyappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Comodity_created_at(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Comodity",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Comodity_updated_at(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Comodity",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _ComodityPagination_limit(ctx context.Context, field graphql.CollectedField, obj *model.ComodityPagination) (ret graphql.Marshaler) {
@@ -1097,6 +1112,41 @@ func (ec *executionContext) _Mutation_user(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.UserOps)
 	fc.Result = res
 	return ec.marshalNUserOps2ᚖmyappᚋgraphᚋmodelᚐUserOps(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_commodity(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Commodity(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CommodityOps)
+	fc.Result = res
+	return ec.marshalNCommodityOps2ᚖmyappᚋgraphᚋmodelᚐCommodityOps(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1456,9 +1506,9 @@ func (ec *executionContext) _UserOps_register(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.LoginResponse)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOLoginResponse2ᚖmyappᚋgraphᚋmodelᚐLoginResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserOps_login(ctx context.Context, field graphql.CollectedField, obj *model.UserOps) (ret graphql.Marshaler) {
@@ -2618,6 +2668,66 @@ func (ec *executionContext) unmarshalInputLoginUser(ctx context.Context, obj int
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputNewComodity(ctx context.Context, obj interface{}) (model.NewComodity, error) {
+	var it model.NewComodity
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "min_purchase":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min_purchase"))
+			it.MinPurchase, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "unit_type":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unit_type"))
+			it.UnitType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "unit_price":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unit_price"))
+			it.UnitPrice, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "images":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("images"))
+			it.Images, err = ec.unmarshalNString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj interface{}) (model.NewUser, error) {
 	var it model.NewUser
 	var asMap = obj.(map[string]interface{})
@@ -2686,6 +2796,42 @@ func (ec *executionContext) unmarshalInputNewUser(ctx context.Context, obj inter
 
 // region    **************************** object.gotpl ****************************
 
+var commodityOpsImplementors = []string{"CommodityOps"}
+
+func (ec *executionContext) _CommodityOps(ctx context.Context, sel ast.SelectionSet, obj *model.CommodityOps) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, commodityOpsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CommodityOps")
+		case "create":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CommodityOps_create(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var comodityImplementors = []string{"Comodity"}
 
 func (ec *executionContext) _Comodity(ctx context.Context, sel ast.SelectionSet, obj *model.Comodity) graphql.Marshaler {
@@ -2729,13 +2875,6 @@ func (ec *executionContext) _Comodity(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "created_at":
-			out.Values[i] = ec._Comodity_created_at(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "updated_at":
-			out.Values[i] = ec._Comodity_updated_at(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2850,6 +2989,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "user":
 			out.Values[i] = ec._Mutation_user(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "commodity":
+			out.Values[i] = ec._Mutation_commodity(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3276,6 +3420,24 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCommodityOps2myappᚋgraphᚋmodelᚐCommodityOps(ctx context.Context, sel ast.SelectionSet, v model.CommodityOps) graphql.Marshaler {
+	return ec._CommodityOps(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCommodityOps2ᚖmyappᚋgraphᚋmodelᚐCommodityOps(ctx context.Context, sel ast.SelectionSet, v *model.CommodityOps) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._CommodityOps(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNComodity2myappᚋgraphᚋmodelᚐComodity(ctx context.Context, sel ast.SelectionSet, v model.Comodity) graphql.Marshaler {
+	return ec._Comodity(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNComodity2ᚕᚖmyappᚋgraphᚋmodelᚐComodityᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Comodity) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -3337,21 +3499,6 @@ func (ec *executionContext) marshalNComodityPagination2ᚖmyappᚋgraphᚋmodel�
 	return ec._ComodityPagination(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
-	res, err := graphql.UnmarshalFloat(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
-	res := graphql.MarshalFloat(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3404,6 +3551,36 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNUser2ᚕᚖmyappᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
@@ -3733,6 +3910,21 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 	return graphql.MarshalInt(*v)
+}
+
+func (ec *executionContext) marshalOLoginResponse2ᚖmyappᚋgraphᚋmodelᚐLoginResponse(ctx context.Context, sel ast.SelectionSet, v *model.LoginResponse) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._LoginResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalONewComodity2ᚖmyappᚋgraphᚋmodelᚐNewComodity(ctx context.Context, v interface{}) (*model.NewComodity, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputNewComodity(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"log"
 	"myapp/config"
 	"myapp/graph/model"
@@ -16,7 +15,7 @@ import (
 )
 
 //Register User
-func Register(ctx context.Context, input model.NewUser) (*string, error) {
+func Register(ctx context.Context, input model.NewUser) (*model.LoginResponse, error) {
 	if isValid, err := utils.ValidateInput(ctx, input); !isValid {
 		return nil, err
 	}
@@ -42,9 +41,18 @@ func Register(ctx context.Context, input model.NewUser) (*string, error) {
 		return nil, gqlerror.Errorf("Registration failed %s", err.Error())
 	}
 
-	response := fmt.Sprintf("%s", "Registration success")
+	user := model.User{
+		Username:       input.Username,
+		Email:          input.Email,
+		Role:           input.Role,
+		WhatsappNumber: *input.WhatsappNumber,
+	}
+	accessToken, _ := utils.CreateToken(user)
 
-	return &response, nil
+	return &model.LoginResponse{
+		AccessToken: accessToken,
+		User:        &user,
+	}, nil
 }
 
 func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, error) {
@@ -65,7 +73,7 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 		log.Fatal(err)
 	}
 
-	if isValid := utils.CheckPassword(userJSON["password"].(string), input.Password); !isValid {
+	if isValid := utils.CheckPassword(userJSON["hashedPassword"].(string), input.Password); !isValid {
 		return nil, gqlerror.Errorf("%s", "Incorrect username or password")
 	}
 

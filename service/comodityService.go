@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"log"
 	"myapp/config"
 	"myapp/graph/model"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,8 +40,6 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 
 		comodity := model.Comodity{
 			Name:        comodityJSON["name"].(string),
-			Image:       comodityJSON["image"].(string),
-			UnitPrice:   comodityJSON["unit_price"].(float64),
 			UnitType:    comodityJSON["unit_type"].(string),
 			Description: &temp,
 			MinPurchase: comodityJSON["min_purchase"].(string),
@@ -52,6 +52,35 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 	return comodities, nil
 }
 
-func CommodityCreate(){
-	
+func CommodityCreate(input *model.NewComodity,user *model.User) *model.Comodity{
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Comodities")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	_, err := collection.InsertOne(ctx, bson.D{
+		{"name",input.Name},
+		{"minPurchase",input.MinPurchase},
+		{"unitPrice",input.UnitPrice},
+		{"unitType",input.UnitType},
+		{"description",input.Description},
+		{"images",input.Images},
+		{"user",user},
+	})
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	result := model.Comodity{
+		Name: input.Name,
+		Image: input.Images,
+		UnitPrice: input.UnitPrice,
+		UnitType: input.UnitType,
+		MinPurchase: input.MinPurchase,
+		Description: &input.Description,
+		User: user,
+	}
+	return &result
 }
