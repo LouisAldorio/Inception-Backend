@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"myapp/config"
 	"myapp/graph/model"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -32,6 +34,13 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 			return nil, err
 		}
 
+		//image array
+		var images []*string
+		for _, v := range comodityJSON["images"].(primitive.A) {
+			image := fmt.Sprintf("%v", v)
+			images = append(images, &image)
+		}
+
 		var temp = comodityJSON["description"].(string)
 		var user model.User
 
@@ -40,9 +49,11 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 
 		comodity := model.Comodity{
 			Name:        comodityJSON["name"].(string),
-			UnitType:    comodityJSON["unit_type"].(string),
+			UnitType:    comodityJSON["unitType"].(string),
 			Description: &temp,
-			MinPurchase: comodityJSON["min_purchase"].(string),
+			Image:       images,
+			UnitPrice:   comodityJSON["unitPrice"].(string),
+			MinPurchase: comodityJSON["minPurchase"].(string),
 			User:        &user,
 		}
 
@@ -52,7 +63,7 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 	return comodities, nil
 }
 
-func CommodityCreate(input *model.NewComodity,user *model.User) *model.Comodity{
+func CommodityCreate(input *model.NewComodity, user *model.User) *model.Comodity {
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Comodities")
 
@@ -60,13 +71,13 @@ func CommodityCreate(input *model.NewComodity,user *model.User) *model.Comodity{
 	defer cancel()
 
 	_, err := collection.InsertOne(ctx, bson.D{
-		{"name",input.Name},
-		{"minPurchase",input.MinPurchase},
-		{"unitPrice",input.UnitPrice},
-		{"unitType",input.UnitType},
-		{"description",input.Description},
-		{"images",input.Images},
-		{"user",user},
+		{"name", input.Name},
+		{"minPurchase", input.MinPurchase},
+		{"unitPrice", input.UnitPrice},
+		{"unitType", input.UnitType},
+		{"description", input.Description},
+		{"images", input.Images},
+		{"user", user},
 	})
 
 	if err != nil {
@@ -74,13 +85,13 @@ func CommodityCreate(input *model.NewComodity,user *model.User) *model.Comodity{
 	}
 
 	result := model.Comodity{
-		Name: input.Name,
-		Image: input.Images,
-		UnitPrice: input.UnitPrice,
-		UnitType: input.UnitType,
+		Name:        input.Name,
+		Image:       input.Images,
+		UnitPrice:   input.UnitPrice,
+		UnitType:    input.UnitType,
 		MinPurchase: input.MinPurchase,
 		Description: &input.Description,
-		User: user,
+		User:        user,
 	}
 	return &result
 }
