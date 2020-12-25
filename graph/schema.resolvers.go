@@ -16,7 +16,7 @@ func (r *mutationResolver) User(ctx context.Context) (*model.UserOps, error) {
 }
 
 func (r *mutationResolver) Commodity(ctx context.Context) (*model.CommodityOps, error) {
-	return &model.CommodityOps{},nil
+	return &model.CommodityOps{}, nil
 }
 
 func (r *queryResolver) Users(ctx context.Context) ([]*model.User, error) {

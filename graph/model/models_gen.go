@@ -7,6 +7,7 @@ type CommodityOps struct {
 }
 
 type Comodity struct {
+	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Image       []*string `json:"image"`
 	UnitPrice   string    `json:"unit_price"`
@@ -52,11 +53,13 @@ type NewUser struct {
 }
 
 type User struct {
-	Username       string `json:"username"`
-	Email          string `json:"email"`
-	Role           string `json:"role"`
-	WhatsappNumber string `json:"whatsapp_number"`
-	HashedPassword string `json:"hashed_password"`
+	ProfileImage   string   `json:"profile_image"`
+	Username       string   `json:"username"`
+	Email          string   `json:"email"`
+	Role           string   `json:"role"`
+	WhatsappNumber string   `json:"whatsapp_number"`
+	HashedPassword string   `json:"hashed_password"`
+	FriendList     []string `json:"friend_list"`
 }
 
 type UserOps struct {

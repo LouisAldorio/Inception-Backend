@@ -36,6 +36,8 @@ func Register(ctx context.Context, input model.NewUser) (*model.LoginResponse, e
 		{"hashedPassword", utils.HashPassword(input.Password)},
 		{"role", input.Role},
 		{"whatsappNumber", input.WhatsappNumber},
+		{"profileImage","https://www.baytekent.com/wp-content/uploads/2016/12/facebook-default-no-profile-pic1.jpg"},
+		{"friendList",[]string{}},
 	})
 	if err != nil {
 		return nil, gqlerror.Errorf("Registration failed %s", err.Error())

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -35,13 +36,21 @@ func GetUserByUsername(username string) (*model.User, error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
+	var friendList []string
+	for _, v := range result["friendList"].(primitive.A) {
+		friend := fmt.Sprintf("%v", v)
+		friendList = append(friendList, friend)
+	}
+
 	user = &model.User{
-		Username: fmt.Sprintf("%v",  result["username"]),
-		Email: fmt.Sprintf("%v",  result["email"]),
-		Role: fmt.Sprintf("%v",  result["role"]),
-		WhatsappNumber: fmt.Sprintf("%v",  result["whatsappNumber"]),
-		HashedPassword: fmt.Sprintf("%v",  result["hashedPassword"]),
+		Username:       fmt.Sprintf("%v", result["username"]),
+		Email:          fmt.Sprintf("%v", result["email"]),
+		Role:           fmt.Sprintf("%v", result["role"]),
+		WhatsappNumber: fmt.Sprintf("%v", result["whatsappNumber"]),
+		HashedPassword: fmt.Sprintf("%v", result["hashedPassword"]),
+		ProfileImage:   fmt.Sprintf("%v", result["profileImage"]),
+		FriendList:     friendList,
 	}
 
 	return user, nil

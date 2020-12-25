@@ -1,4 +1,5 @@
 type Comodity {
+    id: String!
     name: String!
     image: [String]!
     unit_price: String!

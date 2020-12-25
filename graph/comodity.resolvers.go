@@ -13,9 +13,7 @@ import (
 )
 
 func (r *commodityOpsResolver) Create(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error) {
-	fmt.Println(ctx)
 	user := utils.ForContext(ctx)
-	fmt.Println(user)
 	return service.CommodityCreate(input, user), nil
 }
 

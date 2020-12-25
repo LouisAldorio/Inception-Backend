@@ -1,9 +1,11 @@
 type User {
+    profile_image: String!
     username: String!
     email: String!
     role: String!
     whatsapp_number: String!
     hashed_password: String!
+    friend_list: [String!]! 
 }
 
 input NewUser {

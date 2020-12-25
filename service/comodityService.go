@@ -22,6 +22,7 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 
 	//get user from mongoDB where username
 	findOptions := options.FindOptions{}
+	findOptions.SetSort(bson.D{{"_id", -1}})
 
 	res, err := collection.Find(ctx, bson.M{}, &findOptions)
 	if err != nil {
@@ -48,6 +49,7 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 		mapstructure.Decode(userJSON, &user)
 
 		comodity := model.Comodity{
+			ID:          comodityJSON["_id"].(primitive.ObjectID).String(),
 			Name:        comodityJSON["name"].(string),
 			UnitType:    comodityJSON["unitType"].(string),
 			Description: &temp,
