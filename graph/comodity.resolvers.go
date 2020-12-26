@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
@@ -18,7 +17,7 @@ func (r *commodityOpsResolver) Create(ctx context.Context, obj *model.CommodityO
 }
 
 func (r *comodityPaginationResolver) TotalItem(ctx context.Context, obj *model.ComodityPagination) (int, error) {
-	panic(fmt.Errorf("not implemented"))
+	return service.GetTotalCommodity(ctx)
 }
 
 func (r *comodityPaginationResolver) Nodes(ctx context.Context, obj *model.ComodityPagination) ([]*model.Comodity, error) {

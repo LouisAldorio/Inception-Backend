@@ -14,15 +14,35 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetTotalCommodity(ctx context.Context)(int,error){
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Comodities")
+
+
+	count, err := collection.CountDocuments(ctx,bson.D{})
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count),nil
+}
+
 func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, error) {
 	var comodities []*model.Comodity
 
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Comodities")
 
+	one := 1
+	var offset int
+	if limit != nil && page != nil {
+		offset = *limit * (*page - one)
+	}
+
 	//get user from mongoDB where username
 	findOptions := options.FindOptions{}
 	findOptions.SetSort(bson.D{{"_id", -1}})
+	findOptions.SetLimit(int64(*limit)).SetSkip(int64(offset))
 
 	res, err := collection.Find(ctx, bson.M{}, &findOptions)
 	if err != nil {
