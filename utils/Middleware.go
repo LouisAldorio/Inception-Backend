@@ -30,7 +30,9 @@ func GetUserByUsername(username string) (*model.User, error) {
 	defer cancel()
 
 	findOptions := options.FindOneOptions{}
-	cur := collection.FindOne(ctx, bson.M{}, &findOptions)
+	cur := collection.FindOne(ctx, bson.D{
+		{"username",username},
+	}, &findOptions)
 	var result bson.M
 	err := cur.Decode(&result)
 	if err != nil {

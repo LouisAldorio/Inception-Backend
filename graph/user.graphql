@@ -6,6 +6,8 @@ type User {
     whatsapp_number: String!
     hashed_password: String!
     friend_list: [String!]! 
+    looking_for: [String!]!
+    products: [Comodity!]! @goField(forceResolver:true)
 }
 
 input NewUser {

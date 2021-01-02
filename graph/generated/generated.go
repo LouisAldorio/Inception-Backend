@@ -39,6 +39,7 @@ type ResolverRoot interface {
 	ComodityPagination() ComodityPaginationResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	User() UserResolver
 	UserOps() UserOpsResolver
 }
 
@@ -79,14 +80,17 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Comodities func(childComplexity int, limit *int, page *int) int
-		Users      func(childComplexity int) int
+		Comodities  func(childComplexity int, limit *int, page *int) int
+		Users       func(childComplexity int) int
+		UsersByRole func(childComplexity int, role string) int
 	}
 
 	User struct {
 		Email          func(childComplexity int) int
 		FriendList     func(childComplexity int) int
 		HashedPassword func(childComplexity int) int
+		LookingFor     func(childComplexity int) int
+		Products       func(childComplexity int) int
 		ProfileImage   func(childComplexity int) int
 		Role           func(childComplexity int) int
 		Username       func(childComplexity int) int
@@ -113,6 +117,10 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Users(ctx context.Context) ([]*model.User, error)
 	Comodities(ctx context.Context, limit *int, page *int) (*model.ComodityPagination, error)
+	UsersByRole(ctx context.Context, role string) ([]*model.User, error)
+}
+type UserResolver interface {
+	Products(ctx context.Context, obj *model.User) ([]*model.Comodity, error)
 }
 type UserOpsResolver interface {
 	Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*model.LoginResponse, error)
@@ -277,6 +285,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Users(childComplexity), true
 
+	case "Query.users_by_role":
+		if e.complexity.Query.UsersByRole == nil {
+			break
+		}
+
+		args, err := ec.field_Query_users_by_role_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UsersByRole(childComplexity, args["role"].(string)), true
+
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -297,6 +317,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.HashedPassword(childComplexity), true
+
+	case "User.looking_for":
+		if e.complexity.User.LookingFor == nil {
+			break
+		}
+
+		return e.complexity.User.LookingFor(childComplexity), true
+
+	case "User.products":
+		if e.complexity.User.Products == nil {
+			break
+		}
+
+		return e.complexity.User.Products(childComplexity), true
 
 	case "User.profile_image":
 		if e.complexity.User.ProfileImage == nil {
@@ -454,6 +488,7 @@ type Mutation {
 type Query {
     users: [User!]!
     comodities(limit: Int, page: Int): ComodityPagination!
+    users_by_role(role: String!): [User!]!
 }
 `, BuiltIn: false},
 	{Name: "graph/user.graphql", Input: `type User {
@@ -464,6 +499,8 @@ type Query {
     whatsapp_number: String!
     hashed_password: String!
     friend_list: [String!]! 
+    looking_for: [String!]!
+    products: [Comodity!]! @goField(forceResolver:true)
 }
 
 input NewUser {
@@ -547,6 +584,21 @@ func (ec *executionContext) field_Query_comodities_args(ctx context.Context, raw
 		}
 	}
 	args["page"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_users_by_role_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["role"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["role"] = arg0
 	return args, nil
 }
 
@@ -1288,6 +1340,48 @@ func (ec *executionContext) _Query_comodities(ctx context.Context, field graphql
 	return ec.marshalNComodityPagination2ᚖmyappᚋgraphᚋmodelᚐComodityPagination(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_users_by_role(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_users_by_role_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().UsersByRole(rctx, args["role"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚕᚖmyappᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1602,6 +1696,76 @@ func (ec *executionContext) _User_friend_list(ctx context.Context, field graphql
 	res := resTmp.([]string)
 	fc.Result = res
 	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_looking_for(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LookingFor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_products(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().Products(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Comodity)
+	fc.Result = res
+	return ec.marshalNComodity2ᚕᚖmyappᚋgraphᚋmodelᚐComodityᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _UserOps_register(ctx context.Context, field graphql.CollectedField, obj *model.UserOps) (ret graphql.Marshaler) {
@@ -3188,6 +3352,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "users_by_role":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_users_by_role(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -3217,38 +3395,57 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "profile_image":
 			out.Values[i] = ec._User_profile_image(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "username":
 			out.Values[i] = ec._User_username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "role":
 			out.Values[i] = ec._User_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "whatsapp_number":
 			out.Values[i] = ec._User_whatsapp_number(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "hashed_password":
 			out.Values[i] = ec._User_hashed_password(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "friend_list":
 			out.Values[i] = ec._User_friend_list(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "looking_for":
+			out.Values[i] = ec._User_looking_for(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "products":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_products(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

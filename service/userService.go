@@ -1,16 +1,19 @@
 package service
 
 import (
+	"fmt"
 	"log"
 	"myapp/config"
 	"myapp/graph/model"
 	"myapp/utils"
+	"time"
 
 	"context"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -30,15 +33,30 @@ func Register(ctx context.Context, input model.NewUser) (*model.LoginResponse, e
 		return nil, gqlerror.Errorf("%s", "User has been registered!")
 	}
 
-	_, err := collection.InsertOne(ctx, bson.D{
-		{"email", input.Email},
-		{"username", input.Username},
-		{"hashedPassword", utils.HashPassword(input.Password)},
-		{"role", input.Role},
-		{"whatsappNumber", input.WhatsappNumber},
-		{"profileImage","https://www.baytekent.com/wp-content/uploads/2016/12/facebook-default-no-profile-pic1.jpg"},
-		{"friendList",[]string{}},
-	})
+	var err error
+	if input.Role == "Distributor" {
+		_, err = collection.InsertOne(ctx, bson.D{
+			{"email", input.Email},
+			{"username", input.Username},
+			{"hashedPassword", utils.HashPassword(input.Password)},
+			{"role", input.Role},
+			{"whatsappNumber", input.WhatsappNumber},
+			{"profileImage", "https://www.baytekent.com/wp-content/uploads/2016/12/facebook-default-no-profile-pic1.jpg"},
+			{"friendList", []string{}},
+			{"lookingFor", []string{}},
+		})
+	} else if input.Role == "Supplier" {
+		_, err = collection.InsertOne(ctx, bson.D{
+			{"email", input.Email},
+			{"username", input.Username},
+			{"hashedPassword", utils.HashPassword(input.Password)},
+			{"role", input.Role},
+			{"whatsappNumber", input.WhatsappNumber},
+			{"profileImage", "https://www.baytekent.com/wp-content/uploads/2016/12/facebook-default-no-profile-pic1.jpg"},
+			{"friendList", []string{}},
+		})
+	}
+
 	if err != nil {
 		return nil, gqlerror.Errorf("Registration failed %s", err.Error())
 	}
@@ -90,5 +108,51 @@ func Login(ctx context.Context, input model.LoginUser) (*model.LoginResponse, er
 	}, nil
 }
 
+func GetUserByRole(role string) []*model.User {
+	var users []*model.User
 
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Users")
 
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	findOptions := options.FindOptions{}
+	cur, err := collection.Find(ctx, bson.D{
+		{"role", role},
+	}, &findOptions)
+
+	for cur.Next(ctx) {
+		var result bson.M
+		err = cur.Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var friendList []string
+		for _, v := range result["friendList"].(primitive.A) {
+			friend := fmt.Sprintf("%v", v)
+			friendList = append(friendList, friend)
+		}
+
+		var lookingFor []string
+		for _, v := range result["lookingFor"].(primitive.A) {
+			item := fmt.Sprintf("%v", v)
+			lookingFor = append(lookingFor, item)
+		}
+
+		user := &model.User{
+			Username:       fmt.Sprintf("%v", result["username"]),
+			Email:          fmt.Sprintf("%v", result["email"]),
+			Role:           fmt.Sprintf("%v", result["role"]),
+			WhatsappNumber: fmt.Sprintf("%v", result["whatsappNumber"]),
+			HashedPassword: fmt.Sprintf("%v", result["hashedPassword"]),
+			ProfileImage:   fmt.Sprintf("%v", result["profileImage"]),
+			FriendList:     friendList,
+			LookingFor:     lookingFor,
+		}
+		users = append(users, user)
+	}
+
+	return users
+}

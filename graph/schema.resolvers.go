@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
+	"myapp/service"
 	"myapp/utils"
 )
 
@@ -31,6 +32,10 @@ func (r *queryResolver) Comodities(ctx context.Context, limit *int, page *int) (
 		Limit: limit,
 		Page:  page,
 	}, nil
+}
+
+func (r *queryResolver) UsersByRole(ctx context.Context, role string) ([]*model.User, error) {
+	return service.GetUserByRole(role), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

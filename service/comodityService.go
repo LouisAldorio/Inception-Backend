@@ -85,6 +85,60 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 	return comodities, nil
 }
 
+func GetCommoditiesByUsername(ctx context.Context,username string) []*model.Comodity{
+	var comodities []*model.Comodity
+
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Comodities")
+
+	//get user from mongoDB where username
+	findOptions := options.FindOptions{}
+	findOptions.SetSort(bson.D{{"_id", -1}})
+
+
+	res, err := collection.Find(ctx, bson.M{
+		"username": bson.M{"$eq": username},
+	}, &findOptions)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for res.Next(ctx) {
+		var comodityJSON bson.M
+		if err := res.Decode(&comodityJSON); err != nil {
+			fmt.Println(err)
+		}
+
+		//image array
+		var images []*string
+		for _, v := range comodityJSON["images"].(primitive.A) {
+			image := fmt.Sprintf("%v", v)
+			images = append(images, &image)
+		}
+
+		var temp = comodityJSON["description"].(string)
+		var user model.User
+
+		var userJSON = comodityJSON["user"]
+		mapstructure.Decode(userJSON, &user)
+
+		comodity := model.Comodity{
+			ID:          comodityJSON["_id"].(primitive.ObjectID).String(),
+			Name:        comodityJSON["name"].(string),
+			UnitType:    comodityJSON["unitType"].(string),
+			Description: &temp,
+			Image:       images,
+			UnitPrice:   comodityJSON["unitPrice"].(string),
+			MinPurchase: comodityJSON["minPurchase"].(string),
+			User:        &user,
+		}
+
+		comodities = append(comodities, &comodity)
+	}
+
+	return comodities
+}
+
 func CommodityCreate(input *model.NewComodity, user *model.User) *model.Comodity {
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Comodities")

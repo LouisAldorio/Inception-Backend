@@ -53,13 +53,15 @@ type NewUser struct {
 }
 
 type User struct {
-	ProfileImage   string   `json:"profile_image"`
-	Username       string   `json:"username"`
-	Email          string   `json:"email"`
-	Role           string   `json:"role"`
-	WhatsappNumber string   `json:"whatsapp_number"`
-	HashedPassword string   `json:"hashed_password"`
-	FriendList     []string `json:"friend_list"`
+	ProfileImage   string      `json:"profile_image"`
+	Username       string      `json:"username"`
+	Email          string      `json:"email"`
+	Role           string      `json:"role"`
+	WhatsappNumber string      `json:"whatsapp_number"`
+	HashedPassword string      `json:"hashed_password"`
+	FriendList     []string    `json:"friend_list"`
+	LookingFor     []string    `json:"looking_for"`
+	Products       []*Comodity `json:"products"`
 }
 
 type UserOps struct {

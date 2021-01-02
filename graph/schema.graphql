@@ -8,4 +8,5 @@ type Mutation {
 type Query {
     users: [User!]!
     comodities(limit: Int, page: Int): ComodityPagination!
+    users_by_role(role: String!): [User!]!
 }
