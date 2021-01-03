@@ -6,7 +6,7 @@ type Mutation {
 }
 
 type Query {
-    users: [User!]!
+    user_by_username(username: String!): User!
     comodities(limit: Int, page: Int): ComodityPagination!
     users_by_role(role: String!): [User!]!
 }

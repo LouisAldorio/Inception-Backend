@@ -29,7 +29,14 @@ type LoginResponse {
     user: User!
 }
 
+input EditUser {
+    email: String!
+    whatsapp_number: String!
+    profile_image: String!
+}
+
 type UserOps {
     register(input: NewUser!): LoginResponse @goField(forceResolver:true)
     login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
+    update(input: EditUser!): User! @goField(forceResolver:true)
 }

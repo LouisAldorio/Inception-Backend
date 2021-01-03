@@ -24,6 +24,12 @@ type ComodityPagination struct {
 	Nodes     []*Comodity `json:"nodes"`
 }
 
+type EditUser struct {
+	Email          string `json:"email"`
+	WhatsappNumber string `json:"whatsapp_number"`
+	ProfileImage   string `json:"profile_image"`
+}
+
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 	User        *User  `json:"user"`
@@ -67,4 +73,5 @@ type User struct {
 type UserOps struct {
 	Register *LoginResponse `json:"register"`
 	Login    *LoginResponse `json:"login"`
+	Update   *User          `json:"update"`
 }

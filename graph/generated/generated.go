@@ -80,9 +80,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Comodities  func(childComplexity int, limit *int, page *int) int
-		Users       func(childComplexity int) int
-		UsersByRole func(childComplexity int, role string) int
+		Comodities     func(childComplexity int, limit *int, page *int) int
+		UserByUsername func(childComplexity int, username string) int
+		UsersByRole    func(childComplexity int, role string) int
 	}
 
 	User struct {
@@ -100,6 +100,7 @@ type ComplexityRoot struct {
 	UserOps struct {
 		Login    func(childComplexity int, input model.LoginUser) int
 		Register func(childComplexity int, input model.NewUser) int
+		Update   func(childComplexity int, input model.EditUser) int
 	}
 }
 
@@ -115,7 +116,7 @@ type MutationResolver interface {
 	Commodity(ctx context.Context) (*model.CommodityOps, error)
 }
 type QueryResolver interface {
-	Users(ctx context.Context) ([]*model.User, error)
+	UserByUsername(ctx context.Context, username string) (*model.User, error)
 	Comodities(ctx context.Context, limit *int, page *int) (*model.ComodityPagination, error)
 	UsersByRole(ctx context.Context, role string) ([]*model.User, error)
 }
@@ -125,6 +126,7 @@ type UserResolver interface {
 type UserOpsResolver interface {
 	Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*model.LoginResponse, error)
 	Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.LoginResponse, error)
+	Update(ctx context.Context, obj *model.UserOps, input model.EditUser) (*model.User, error)
 }
 
 type executableSchema struct {
@@ -278,12 +280,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Comodities(childComplexity, args["limit"].(*int), args["page"].(*int)), true
 
-	case "Query.users":
-		if e.complexity.Query.Users == nil {
+	case "Query.user_by_username":
+		if e.complexity.Query.UserByUsername == nil {
 			break
 		}
 
-		return e.complexity.Query.Users(childComplexity), true
+		args, err := ec.field_Query_user_by_username_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.UserByUsername(childComplexity, args["username"].(string)), true
 
 	case "Query.users_by_role":
 		if e.complexity.Query.UsersByRole == nil {
@@ -383,6 +390,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.UserOps.Register(childComplexity, args["input"].(model.NewUser)), true
+
+	case "UserOps.update":
+		if e.complexity.UserOps.Update == nil {
+			break
+		}
+
+		args, err := ec.field_UserOps_update_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.UserOps.Update(childComplexity, args["input"].(model.EditUser)), true
 
 	}
 	return 0, false
@@ -486,7 +505,7 @@ type Mutation {
 }
 
 type Query {
-    users: [User!]!
+    user_by_username(username: String!): User!
     comodities(limit: Int, page: Int): ComodityPagination!
     users_by_role(role: String!): [User!]!
 }
@@ -522,9 +541,16 @@ type LoginResponse {
     user: User!
 }
 
+input EditUser {
+    email: String!
+    whatsapp_number: String!
+    profile_image: String!
+}
+
 type UserOps {
     register(input: NewUser!): LoginResponse @goField(forceResolver:true)
     login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
+    update(input: EditUser!): User! @goField(forceResolver:true)
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -587,6 +613,21 @@ func (ec *executionContext) field_Query_comodities_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_user_by_username_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_users_by_role_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -624,6 +665,21 @@ func (ec *executionContext) field_UserOps_register_args(ctx context.Context, raw
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewUser2myappᚋgraphᚋmodelᚐNewUser(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_UserOps_update_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.EditUser
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNEditUser2myappᚋgraphᚋmodelᚐEditUser(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1263,7 +1319,7 @@ func (ec *executionContext) _Mutation_commodity(ctx context.Context, field graph
 	return ec.marshalNCommodityOps2ᚖmyappᚋgraphᚋmodelᚐCommodityOps(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_user_by_username(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1279,9 +1335,16 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_user_by_username_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Users(rctx)
+		return ec.resolvers.Query().UserByUsername(rctx, args["username"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1293,9 +1356,9 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.User)
+	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖmyappᚋgraphᚋmodelᚐUserᚄ(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖmyappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_comodities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1847,6 +1910,48 @@ func (ec *executionContext) _UserOps_login(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.LoginResponse)
 	fc.Result = res
 	return ec.marshalNLoginResponse2ᚖmyappᚋgraphᚋmodelᚐLoginResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserOps_update(ctx context.Context, field graphql.CollectedField, obj *model.UserOps) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserOps",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_UserOps_update_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.UserOps().Update(rctx, obj, args["input"].(model.EditUser))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖmyappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2936,6 +3041,42 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputEditUser(ctx context.Context, obj interface{}) (model.EditUser, error) {
+	var it model.EditUser
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "whatsapp_number":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("whatsapp_number"))
+			it.WhatsappNumber, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "profile_image":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profile_image"))
+			it.ProfileImage, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLoginUser(ctx context.Context, obj interface{}) (model.LoginUser, error) {
 	var it model.LoginUser
 	var asMap = obj.(map[string]interface{})
@@ -3324,7 +3465,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "users":
+		case "user_by_username":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -3332,7 +3473,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_users(ctx, field)
+				res = ec._Query_user_by_username(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3488,6 +3629,20 @@ func (ec *executionContext) _UserOps(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._UserOps_login(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "update":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserOps_update(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3843,6 +3998,11 @@ func (ec *executionContext) marshalNComodityPagination2ᚖmyappᚋgraphᚋmodel�
 	return ec._ComodityPagination(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNEditUser2myappᚋgraphᚋmodelᚐEditUser(ctx context.Context, v interface{}) (model.EditUser, error) {
+	res, err := ec.unmarshalInputEditUser(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3955,6 +4115,10 @@ func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNUser2myappᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+	return ec._User(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNUser2ᚕᚖmyappᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {

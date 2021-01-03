@@ -156,3 +156,33 @@ func GetUserByRole(role string) []*model.User {
 
 	return users
 }
+
+func UpdateUserProfile(user *model.User, input model.EditUser)*model.User{
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	filter := bson.D{{"username", user.Username}}
+    update := bson.D{{"$set",
+        bson.D{
+			{"email", input.Email},
+			{"whatsappNumber",input.WhatsappNumber},
+			{"profileImage",input.ProfileImage},
+        },
+	}}
+	
+	_, err := collection.UpdateOne(
+        ctx,
+        filter,
+        update,
+    )
+    if err != nil {
+        fmt.Println(err)
+	}
+
+	result,_ := utils.GetUserByUsername(user.Username)
+	
+	return result
+}

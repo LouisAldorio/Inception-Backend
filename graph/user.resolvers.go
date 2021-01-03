@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
@@ -13,7 +12,7 @@ import (
 )
 
 func (r *userResolver) Products(ctx context.Context, obj *model.User) ([]*model.Comodity, error) {
-	return service.GetCommoditiesByUsername(ctx,obj.Username),nil
+	return service.GetCommoditiesByUsername(ctx, obj.Username), nil
 }
 
 func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*model.LoginResponse, error) {
@@ -21,9 +20,12 @@ func (r *userOpsResolver) Register(ctx context.Context, obj *model.UserOps, inpu
 }
 
 func (r *userOpsResolver) Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.LoginResponse, error) {
-	user := utils.ForContext(ctx)
-	fmt.Println(user)
 	return service.Login(ctx, input)
+}
+
+func (r *userOpsResolver) Update(ctx context.Context, obj *model.UserOps, input model.EditUser) (*model.User, error) {
+	user := utils.ForContext(ctx)
+	return service.UpdateUserProfile(user, input), nil
 }
 
 // User returns generated.UserResolver implementation.
