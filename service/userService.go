@@ -54,6 +54,7 @@ func Register(ctx context.Context, input model.NewUser) (*model.LoginResponse, e
 			{"whatsappNumber", input.WhatsappNumber},
 			{"profileImage", "https://www.baytekent.com/wp-content/uploads/2016/12/facebook-default-no-profile-pic1.jpg"},
 			{"friendList", []string{}},
+			{"lookingFor", []string{}},
 		})
 	}
 
