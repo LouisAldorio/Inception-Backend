@@ -24,7 +24,8 @@ func (r *userOpsResolver) Login(ctx context.Context, obj *model.UserOps, input m
 }
 
 func (r *userOpsResolver) Update(ctx context.Context, obj *model.UserOps, input model.EditUser) (*model.User, error) {
-	user := utils.ForContext(ctx)
+	username := utils.ForContext(ctx)
+	user, _ := utils.GetUserByUsername(username)
 	return service.UpdateUserProfile(user, input), nil
 }
 
