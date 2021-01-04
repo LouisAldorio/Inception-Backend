@@ -4,6 +4,7 @@ package model
 
 type CommodityOps struct {
 	Create *Comodity `json:"create"`
+	Update *Comodity `json:"update"`
 }
 
 type Comodity struct {

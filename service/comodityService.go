@@ -6,7 +6,6 @@ import (
 	"log"
 	"myapp/config"
 	"myapp/graph/model"
-	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/mongo-driver/bson"
@@ -133,12 +132,9 @@ func GetCommoditiesByUsername(ctx context.Context, username string) []*model.Com
 	return comodities
 }
 
-func CommodityCreate(input *model.NewComodity, user *model.User) *model.Comodity {
+func CommodityCreate(ctx context.Context, input *model.NewComodity, username string) *model.Comodity {
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Comodities")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
 	_, err := collection.InsertOne(ctx, bson.D{
 		{"name", input.Name},
@@ -147,7 +143,7 @@ func CommodityCreate(input *model.NewComodity, user *model.User) *model.Comodity
 		{"unitType", input.UnitType},
 		{"description", input.Description},
 		{"images", input.Images},
-		{"username", user.Username},
+		{"username", username},
 	})
 
 	if err != nil {
@@ -161,7 +157,7 @@ func CommodityCreate(input *model.NewComodity, user *model.User) *model.Comodity
 		UnitType:    input.UnitType,
 		MinPurchase: input.MinPurchase,
 		Description: &input.Description,
-		User:        user,
+		Username:    username,
 	}
 	return &result
 }

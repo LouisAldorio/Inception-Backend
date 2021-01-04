@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
@@ -13,8 +14,11 @@ import (
 
 func (r *commodityOpsResolver) Create(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error) {
 	username := utils.ForContext(ctx)
-	user, _ := utils.GetUserByUsername(username)
-	return service.CommodityCreate(input, user), nil
+	return service.CommodityCreate(ctx, input,username), nil
+}
+
+func (r *commodityOpsResolver) Update(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *comodityResolver) User(ctx context.Context, obj *model.Comodity) (*model.User, error) {

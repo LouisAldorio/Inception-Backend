@@ -28,4 +28,5 @@ type ComodityPagination {
 
 type CommodityOps {
     create(input: NewComodity): Comodity! @goField(forceResolver:true)
+    update(input: NewComodity): Comodity! @goField(forceResolver:true)
 }

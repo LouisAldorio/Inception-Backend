@@ -50,6 +50,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	CommodityOps struct {
 		Create func(childComplexity int, input *model.NewComodity) int
+		Update func(childComplexity int, input *model.NewComodity) int
 	}
 
 	Comodity struct {
@@ -108,6 +109,7 @@ type ComplexityRoot struct {
 
 type CommodityOpsResolver interface {
 	Create(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error)
+	Update(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error)
 }
 type ComodityResolver interface {
 	User(ctx context.Context, obj *model.Comodity) (*model.User, error)
@@ -160,6 +162,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CommodityOps.Create(childComplexity, args["input"].(*model.NewComodity)), true
+
+	case "CommodityOps.update":
+		if e.complexity.CommodityOps.Update == nil {
+			break
+		}
+
+		args, err := ec.field_CommodityOps_update_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.CommodityOps.Update(childComplexity, args["input"].(*model.NewComodity)), true
 
 	case "Comodity.description":
 		if e.complexity.Comodity.Description == nil {
@@ -509,6 +523,7 @@ type ComodityPagination {
 
 type CommodityOps {
     create(input: NewComodity): Comodity! @goField(forceResolver:true)
+    update(input: NewComodity): Comodity! @goField(forceResolver:true)
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphql", Input: `directive @goField(forceResolver: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
@@ -574,6 +589,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // region    ***************************** args.gotpl *****************************
 
 func (ec *executionContext) field_CommodityOps_create_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.NewComodity
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalONewComodity2ᚖmyappᚋgraphᚋmodelᚐNewComodity(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_CommodityOps_update_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.NewComodity
@@ -766,6 +796,48 @@ func (ec *executionContext) _CommodityOps_create(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.CommodityOps().Create(rctx, obj, args["input"].(*model.NewComodity))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Comodity)
+	fc.Result = res
+	return ec.marshalNComodity2ᚖmyappᚋgraphᚋmodelᚐComodity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CommodityOps_update(ctx context.Context, field graphql.CollectedField, obj *model.CommodityOps) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CommodityOps",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_CommodityOps_update_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.CommodityOps().Update(rctx, obj, args["input"].(*model.NewComodity))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3310,6 +3382,20 @@ func (ec *executionContext) _CommodityOps(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._CommodityOps_create(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "update":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CommodityOps_update(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
