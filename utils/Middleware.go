@@ -31,7 +31,7 @@ func GetUserByUsername(username string) (*model.User, error) {
 
 	findOptions := options.FindOneOptions{}
 	cur := collection.FindOne(ctx, bson.D{
-		{"username",username},
+		{"username", username},
 	}, &findOptions)
 	var result bson.M
 	err := cur.Decode(&result)
@@ -45,6 +45,12 @@ func GetUserByUsername(username string) (*model.User, error) {
 		friendList = append(friendList, friend)
 	}
 
+	var lookingFor []string
+	for _, v := range result["lookingFor"].(primitive.A) {
+		item := fmt.Sprintf("%v", v)
+		lookingFor = append(lookingFor, item)
+	}
+
 	user = &model.User{
 		Username:       fmt.Sprintf("%v", result["username"]),
 		Email:          fmt.Sprintf("%v", result["email"]),
@@ -53,6 +59,7 @@ func GetUserByUsername(username string) (*model.User, error) {
 		HashedPassword: fmt.Sprintf("%v", result["hashedPassword"]),
 		ProfileImage:   fmt.Sprintf("%v", result["profileImage"]),
 		FriendList:     friendList,
+		LookingFor:     lookingFor,
 	}
 
 	return user, nil
