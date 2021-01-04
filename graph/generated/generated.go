@@ -36,6 +36,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	CommodityOps() CommodityOpsResolver
+	Comodity() ComodityResolver
 	ComodityPagination() ComodityPaginationResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -60,6 +61,7 @@ type ComplexityRoot struct {
 		UnitPrice   func(childComplexity int) int
 		UnitType    func(childComplexity int) int
 		User        func(childComplexity int) int
+		Username    func(childComplexity int) int
 	}
 
 	ComodityPagination struct {
@@ -106,6 +108,9 @@ type ComplexityRoot struct {
 
 type CommodityOpsResolver interface {
 	Create(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error)
+}
+type ComodityResolver interface {
+	User(ctx context.Context, obj *model.Comodity) (*model.User, error)
 }
 type ComodityPaginationResolver interface {
 	TotalItem(ctx context.Context, obj *model.ComodityPagination) (int, error)
@@ -211,6 +216,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Comodity.User(childComplexity), true
+
+	case "Comodity.username":
+		if e.complexity.Comodity.Username == nil {
+			break
+		}
+
+		return e.complexity.Comodity.Username(childComplexity), true
 
 	case "ComodityPagination.limit":
 		if e.complexity.ComodityPagination.Limit == nil {
@@ -475,7 +487,8 @@ var sources = []*ast.Source{
     unit_type: String!
     min_purchase: String!    
     description: String
-    user: User!
+    username: String!
+    user: User! @goField(forceResolver: true)
 }
 
 input NewComodity {
@@ -1010,7 +1023,7 @@ func (ec *executionContext) _Comodity_description(ctx context.Context, field gra
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Comodity_user(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
+func (ec *executionContext) _Comodity_username(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1028,7 +1041,42 @@ func (ec *executionContext) _Comodity_user(ctx context.Context, field graphql.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Comodity_user(ctx context.Context, field graphql.CollectedField, obj *model.Comodity) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Comodity",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Comodity().User(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3283,40 +3331,54 @@ func (ec *executionContext) _Comodity(ctx context.Context, sel ast.SelectionSet,
 		case "id":
 			out.Values[i] = ec._Comodity_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._Comodity_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "image":
 			out.Values[i] = ec._Comodity_image(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "unit_price":
 			out.Values[i] = ec._Comodity_unit_price(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "unit_type":
 			out.Values[i] = ec._Comodity_unit_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "min_purchase":
 			out.Values[i] = ec._Comodity_min_purchase(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "description":
 			out.Values[i] = ec._Comodity_description(ctx, field, obj)
-		case "user":
-			out.Values[i] = ec._Comodity_user(ctx, field, obj)
+		case "username":
+			out.Values[i] = ec._Comodity_username(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "user":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comodity_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

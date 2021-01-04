@@ -6,7 +6,8 @@ type Comodity {
     unit_type: String!
     min_purchase: String!    
     description: String
-    user: User!
+    username: String!
+    user: User! @goField(forceResolver: true)
 }
 
 input NewComodity {

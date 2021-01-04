@@ -14,17 +14,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetTotalCommodity(ctx context.Context)(int,error){
+func GetTotalCommodity(ctx context.Context) (int, error) {
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Comodities")
 
-
-	count, err := collection.CountDocuments(ctx,bson.D{})
+	count, err := collection.CountDocuments(ctx, bson.D{})
 	if err != nil {
 		return 0, err
 	}
 
-	return int(count),nil
+	return int(count), nil
 }
 
 func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, error) {
@@ -63,10 +62,6 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 		}
 
 		var temp = comodityJSON["description"].(string)
-		var user model.User
-
-		var userJSON = comodityJSON["user"]
-		mapstructure.Decode(userJSON, &user)
 
 		comodity := model.Comodity{
 			ID:          comodityJSON["_id"].(primitive.ObjectID).String(),
@@ -76,7 +71,7 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 			Image:       images,
 			UnitPrice:   comodityJSON["unitPrice"].(string),
 			MinPurchase: comodityJSON["minPurchase"].(string),
-			User:        &user,
+			Username:    comodityJSON["username"].(string),
 		}
 
 		comodities = append(comodities, &comodity)
@@ -85,7 +80,7 @@ func ComodityGetList(ctx context.Context, limit, page *int) ([]*model.Comodity, 
 	return comodities, nil
 }
 
-func GetCommoditiesByUsername(ctx context.Context,username string) []*model.Comodity{
+func GetCommoditiesByUsername(ctx context.Context, username string) []*model.Comodity {
 	var comodities []*model.Comodity
 
 	client := config.MongodbConnect()
@@ -94,7 +89,6 @@ func GetCommoditiesByUsername(ctx context.Context,username string) []*model.Como
 	//get user from mongoDB where username
 	findOptions := options.FindOptions{}
 	findOptions.SetSort(bson.D{{"_id", -1}})
-
 
 	res, err := collection.Find(ctx, bson.M{
 		"username": bson.M{"$eq": username},
@@ -123,14 +117,14 @@ func GetCommoditiesByUsername(ctx context.Context,username string) []*model.Como
 		mapstructure.Decode(userJSON, &user)
 
 		comodity := model.Comodity{
-			ID:          comodityJSON["_id"].(primitive.ObjectID).String(),
+			ID:          comodityJSON["_id"].(primitive.ObjectID).Hex(),
 			Name:        comodityJSON["name"].(string),
 			UnitType:    comodityJSON["unitType"].(string),
 			Description: &temp,
 			Image:       images,
 			UnitPrice:   comodityJSON["unitPrice"].(string),
 			MinPurchase: comodityJSON["minPurchase"].(string),
-			User:        &user,
+			Username:    comodityJSON["username"].(string),
 		}
 
 		comodities = append(comodities, &comodity)
@@ -153,7 +147,7 @@ func CommodityCreate(input *model.NewComodity, user *model.User) *model.Comodity
 		{"unitType", input.UnitType},
 		{"description", input.Description},
 		{"images", input.Images},
-		{"user", user},
+		{"username", user.Username},
 	})
 
 	if err != nil {

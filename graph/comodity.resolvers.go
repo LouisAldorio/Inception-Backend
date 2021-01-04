@@ -16,6 +16,10 @@ func (r *commodityOpsResolver) Create(ctx context.Context, obj *model.CommodityO
 	return service.CommodityCreate(input, user), nil
 }
 
+func (r *comodityResolver) User(ctx context.Context, obj *model.Comodity) (*model.User, error) {
+	return utils.GetUserByUsername(obj.Username)
+}
+
 func (r *comodityPaginationResolver) TotalItem(ctx context.Context, obj *model.ComodityPagination) (int, error) {
 	return service.GetTotalCommodity(ctx)
 }
@@ -27,10 +31,14 @@ func (r *comodityPaginationResolver) Nodes(ctx context.Context, obj *model.Comod
 // CommodityOps returns generated.CommodityOpsResolver implementation.
 func (r *Resolver) CommodityOps() generated.CommodityOpsResolver { return &commodityOpsResolver{r} }
 
+// Comodity returns generated.ComodityResolver implementation.
+func (r *Resolver) Comodity() generated.ComodityResolver { return &comodityResolver{r} }
+
 // ComodityPagination returns generated.ComodityPaginationResolver implementation.
 func (r *Resolver) ComodityPagination() generated.ComodityPaginationResolver {
 	return &comodityPaginationResolver{r}
 }
 
 type commodityOpsResolver struct{ *Resolver }
+type comodityResolver struct{ *Resolver }
 type comodityPaginationResolver struct{ *Resolver }

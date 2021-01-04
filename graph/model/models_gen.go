@@ -14,6 +14,7 @@ type Comodity struct {
 	UnitType    string    `json:"unit_type"`
 	MinPurchase string    `json:"min_purchase"`
 	Description *string   `json:"description"`
+	Username    string    `json:"username"`
 	User        *User     `json:"user"`
 }
 
