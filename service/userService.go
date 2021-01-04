@@ -170,6 +170,7 @@ func UpdateUserProfile(user *model.User, input model.EditUser)*model.User{
 			{"email", input.Email},
 			{"whatsappNumber",input.WhatsappNumber},
 			{"profileImage",input.ProfileImage},
+			{"lookingFor",input.LookingFor},
         },
 	}}
 	

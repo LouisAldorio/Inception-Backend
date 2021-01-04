@@ -26,9 +26,10 @@ type ComodityPagination struct {
 }
 
 type EditUser struct {
-	Email          string `json:"email"`
-	WhatsappNumber string `json:"whatsapp_number"`
-	ProfileImage   string `json:"profile_image"`
+	Email          string   `json:"email"`
+	WhatsappNumber string   `json:"whatsapp_number"`
+	ProfileImage   string   `json:"profile_image"`
+	LookingFor     []string `json:"looking_for"`
 }
 
 type LoginResponse struct {

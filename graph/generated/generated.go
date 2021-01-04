@@ -558,6 +558,7 @@ input EditUser {
     email: String!
     whatsapp_number: String!
     profile_image: String!
+    looking_for: [String!]!
 }
 
 type UserOps {
@@ -3116,6 +3117,14 @@ func (ec *executionContext) unmarshalInputEditUser(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("profile_image"))
 			it.ProfileImage, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "looking_for":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("looking_for"))
+			it.LookingFor, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}

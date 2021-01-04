@@ -33,6 +33,7 @@ input EditUser {
     email: String!
     whatsapp_number: String!
     profile_image: String!
+    looking_for: [String!]!
 }
 
 type UserOps {
