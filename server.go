@@ -4,9 +4,11 @@ import (
 	"log"
 	"myapp/graph"
 	"myapp/graph/generated"
-	"myapp/utils"
 	"net/http"
 	"os"
+
+	"github.com/LouisAldorio/Testing-early-injection-directive/directives"
+	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -23,9 +25,12 @@ func main() {
 	}
 
 	router := chi.NewRouter()
-	router.Use(utils.Middleware())
+	router.Use(middleware.Auth())
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	c := generated.Config{Resolvers: &graph.Resolver{}}
+	c.Directives.HasRole = directives.HasRole
+
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(c))
 
 	handler := cors.New(cors.Options{
 		AllowedHeaders: []string{"*"},

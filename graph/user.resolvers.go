@@ -5,10 +5,13 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
 	"myapp/utils"
+
+	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 )
 
 func (r *userResolver) Products(ctx context.Context, obj *model.User) ([]*model.Comodity, error) {
@@ -24,9 +27,14 @@ func (r *userOpsResolver) Login(ctx context.Context, obj *model.UserOps, input m
 }
 
 func (r *userOpsResolver) Update(ctx context.Context, obj *model.UserOps, input model.EditUser) (*model.User, error) {
-	username := utils.ForContext(ctx)
-	user, _ := utils.GetUserByUsername(username)
+	userClaim := middleware.AuthContext(ctx)
+	user, _ := utils.GetUserByUsername(userClaim.Username)
 	return service.UpdateUserProfile(user, input), nil
+}
+
+func (r *userOpsResolver) DeleteUser(ctx context.Context, obj *model.UserOps, username string) (*bool, error) {
+	fmt.Println("user deleted")
+	return nil, nil
 }
 
 // User returns generated.UserResolver implementation.

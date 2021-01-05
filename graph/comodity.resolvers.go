@@ -10,11 +10,13 @@ import (
 	"myapp/graph/model"
 	"myapp/service"
 	"myapp/utils"
+
+	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 )
 
 func (r *commodityOpsResolver) Create(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error) {
-	username := utils.ForContext(ctx)
-	return service.CommodityCreate(ctx, input,username), nil
+	userClaim := middleware.AuthContext(ctx)
+	return service.CommodityCreate(ctx, input, userClaim.Username), nil
 }
 
 func (r *commodityOpsResolver) Update(ctx context.Context, obj *model.CommodityOps, input *model.NewComodity) (*model.Comodity, error) {

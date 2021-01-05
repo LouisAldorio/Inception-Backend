@@ -1,3 +1,5 @@
+# directive @hasRole(role: String!) on FIELD_DEFINITION
+
 type User {
     profile_image: String!
     username: String!
@@ -40,4 +42,5 @@ type UserOps {
     register(input: NewUser!): LoginResponse @goField(forceResolver:true)
     login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
     update(input: EditUser!): User! @goField(forceResolver:true)
+    deleteUser(username: String!): Boolean @hasRole(role: "SUPPLIER") @goField(forceResolver:true)
 }

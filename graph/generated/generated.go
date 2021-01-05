@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"myapp/graph/model"
 	"strconv"
 	"sync"
@@ -45,6 +46,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	HasRole func(ctx context.Context, obj interface{}, next graphql.Resolver, role string) (res interface{}, err error)
 }
 
 type ComplexityRoot struct {
@@ -101,9 +103,10 @@ type ComplexityRoot struct {
 	}
 
 	UserOps struct {
-		Login    func(childComplexity int, input model.LoginUser) int
-		Register func(childComplexity int, input model.NewUser) int
-		Update   func(childComplexity int, input model.EditUser) int
+		DeleteUser func(childComplexity int, username string) int
+		Login      func(childComplexity int, input model.LoginUser) int
+		Register   func(childComplexity int, input model.NewUser) int
+		Update     func(childComplexity int, input model.EditUser) int
 	}
 }
 
@@ -134,6 +137,7 @@ type UserOpsResolver interface {
 	Register(ctx context.Context, obj *model.UserOps, input model.NewUser) (*model.LoginResponse, error)
 	Login(ctx context.Context, obj *model.UserOps, input model.LoginUser) (*model.LoginResponse, error)
 	Update(ctx context.Context, obj *model.UserOps, input model.EditUser) (*model.User, error)
+	DeleteUser(ctx context.Context, obj *model.UserOps, username string) (*bool, error)
 }
 
 type executableSchema struct {
@@ -393,6 +397,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.WhatsappNumber(childComplexity), true
 
+	case "UserOps.deleteUser":
+		if e.complexity.UserOps.DeleteUser == nil {
+			break
+		}
+
+		args, err := ec.field_UserOps_deleteUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.UserOps.DeleteUser(childComplexity, args["username"].(string)), true
+
 	case "UserOps.login":
 		if e.complexity.UserOps.Login == nil {
 			break
@@ -525,7 +541,10 @@ type CommodityOps {
     create(input: NewComodity): Comodity! @goField(forceResolver:true)
     update(input: NewComodity): Comodity! @goField(forceResolver:true)
 }`, BuiltIn: false},
-	{Name: "graph/schema.graphql", Input: `directive @goField(forceResolver: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+	{Name: "graph/schema.graphql", Input: `# directive @goField(forceResolver: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+
+
 
 type Mutation {
     user: UserOps! @goField(forceResolver:true)
@@ -538,7 +557,9 @@ type Query {
     users_by_role(role: String!): [User!]!
 }
 `, BuiltIn: false},
-	{Name: "graph/user.graphql", Input: `type User {
+	{Name: "graph/user.graphql", Input: `# directive @hasRole(role: String!) on FIELD_DEFINITION
+
+type User {
     profile_image: String!
     username: String!
     email: String!
@@ -580,13 +601,38 @@ type UserOps {
     register(input: NewUser!): LoginResponse @goField(forceResolver:true)
     login(input: LoginUser!): LoginResponse! @goField(forceResolver:true)
     update(input: EditUser!): User! @goField(forceResolver:true)
+    deleteUser(username: String!): Boolean @hasRole(role: "SUPPLIER") @goField(forceResolver:true)
 }`, BuiltIn: false},
+	{Name: "inception/directives.graphql", Input: `
+
+			directive @hasRole(role: String!) on FIELD_DEFINITION
+
+			directive @goField(
+				forceResolver: Boolean
+				name: String
+			  ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+		`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) dir_hasRole_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["role"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["role"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_CommodityOps_create_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -684,6 +730,21 @@ func (ec *executionContext) field_Query_users_by_role_args(ctx context.Context, 
 		}
 	}
 	args["role"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_UserOps_deleteUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
 	return args, nil
 }
 
@@ -2073,6 +2134,69 @@ func (ec *executionContext) _UserOps_update(ctx context.Context, field graphql.C
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalNUser2ᚖmyappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _UserOps_deleteUser(ctx context.Context, field graphql.CollectedField, obj *model.UserOps) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "UserOps",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_UserOps_deleteUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.UserOps().DeleteUser(rctx, obj, args["username"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			role, err := ec.unmarshalNString2string(ctx, "SUPPLIER")
+			if err != nil {
+				return nil, err
+			}
+			if ec.directives.HasRole == nil {
+				return nil, errors.New("directive hasRole is not implemented")
+			}
+			return ec.directives.HasRole(ctx, obj, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -3803,6 +3927,17 @@ func (ec *executionContext) _UserOps(ctx context.Context, sel ast.SelectionSet, 
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "deleteUser":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserOps_deleteUser(ctx, field, obj)
 				return res
 			})
 		default:

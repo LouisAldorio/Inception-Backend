@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"myapp/graph/model"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -15,6 +16,10 @@ type UserClaim struct {
 	jwt.StandardClaims
 }
 
+func (u *UserClaim) HasRole(role string) bool {
+	return strings.ToUpper(u.Role) == strings.ToUpper(role)
+}
+
 var jwtKey = []byte("secret")
 
 func CreateToken(user model.User) (string, error) {
@@ -23,7 +28,7 @@ func CreateToken(user model.User) (string, error) {
 
 	customClaim := UserClaim{
 		Username: user.Username,
-		Role: user.Role,
+		Role:     user.Role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expiredTime,
 		},

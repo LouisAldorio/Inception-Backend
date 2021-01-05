@@ -74,7 +74,8 @@ type User struct {
 }
 
 type UserOps struct {
-	Register *LoginResponse `json:"register"`
-	Login    *LoginResponse `json:"login"`
-	Update   *User          `json:"update"`
+	Register   *LoginResponse `json:"register"`
+	Login      *LoginResponse `json:"login"`
+	Update     *User          `json:"update"`
+	DeleteUser *bool          `json:"deleteUser"`
 }

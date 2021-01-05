@@ -91,8 +91,8 @@ func Middleware() func(http.Handler) http.Handler {
 			}
 
 			//get user dataclaims
-			username := fmt.Sprintf("%v", claims.Username)
-			
+			// username := fmt.Sprintf("%v", claims.Username)
+
 			// user, err := GetUserByUsername(username)
 			// if err != nil {
 			// 	fmt.Println(err)
@@ -101,7 +101,7 @@ func Middleware() func(http.Handler) http.Handler {
 			// }
 
 			//return user data to req
-			ctx := context.WithValue(r.Context(), userCtxKey, username)
+			ctx := context.WithValue(r.Context(), userCtxKey, claims)
 			reqWithCtx := r.WithContext(ctx)
 			next.ServeHTTP(w, reqWithCtx)
 		})
@@ -109,7 +109,7 @@ func Middleware() func(http.Handler) http.Handler {
 }
 
 // ForContext finds the user from the context. REQUIRES Middleware to have run.
-func ForContext(ctx context.Context) string {
-	raw, _ := ctx.Value(userCtxKey).(string)
+func ForContext(ctx context.Context) *UserClaim {
+	raw, _ := ctx.Value(userCtxKey).(*UserClaim)
 	return raw
 }
