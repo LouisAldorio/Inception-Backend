@@ -7,11 +7,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/LouisAldorio/Testing-early-injection-directive/directives"
-	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
-
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
+	"github.com/LouisAldorio/Testing-early-injection-directive/directives"
 	"github.com/go-chi/chi"
 	"github.com/rs/cors"
 )

@@ -17,6 +17,7 @@ type UserClaim struct {
 }
 
 func (u *UserClaim) HasRole(role string) bool {
+	fmt.Println(u)
 	return strings.ToUpper(u.Role) == strings.ToUpper(role)
 }
 

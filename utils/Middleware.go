@@ -85,6 +85,7 @@ func Middleware() func(http.Handler) http.Handler {
 
 			//validate claim
 			claims, ok := jwtToken.Claims.(*UserClaim)
+			fmt.Println(claims)
 			if !ok && !jwtToken.Valid {
 				http.Error(w, "Invalid token", http.StatusForbidden)
 				return
@@ -111,5 +112,6 @@ func Middleware() func(http.Handler) http.Handler {
 // ForContext finds the user from the context. REQUIRES Middleware to have run.
 func ForContext(ctx context.Context) *UserClaim {
 	raw, _ := ctx.Value(userCtxKey).(*UserClaim)
+	fmt.Println(raw)
 	return raw
 }
