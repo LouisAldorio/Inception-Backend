@@ -9,7 +9,6 @@ import (
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
-	"myapp/utils"
 
 	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 )
@@ -24,7 +23,7 @@ func (r *commodityOpsResolver) Update(ctx context.Context, obj *model.CommodityO
 }
 
 func (r *comodityResolver) User(ctx context.Context, obj *model.Comodity) (*model.User, error) {
-	return utils.GetUserByUsername(obj.Username)
+	return service.GetUserByUsername(obj.Username)
 }
 
 func (r *comodityPaginationResolver) TotalItem(ctx context.Context, obj *model.ComodityPagination) (int, error) {

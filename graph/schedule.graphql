@@ -1,0 +1,29 @@
+type Schedule{
+    id: String!
+    schedule_name: String!
+    commodity_name: String!
+    dealed_unit: String!
+    start_date: String!
+    end_date: String!
+    day: [String]!
+    start_time: String!
+    end_time: String!
+    involved_users_username: [String]!
+    involved_users: [User]! @goField(forceResolver: true)
+}
+
+input NewSchedule {
+    schedule_name: String!
+    commodity_name: String!
+    dealed_unit: String!
+    start_date: String!
+    end_date: String!
+    day: [String]!
+    start_time: String!
+    end_time: String!
+    involved_users_username: [String]!
+}
+
+type ScheduleOps {
+    create(input: NewSchedule!): Schedule! @goField(forceResolver: true)
+}

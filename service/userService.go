@@ -184,7 +184,63 @@ func UpdateUserProfile(user *model.User, input model.EditUser)*model.User{
         fmt.Println(err)
 	}
 
-	result,_ := utils.GetUserByUsername(user.Username)
+	result,_ := GetUserByUsername(user.Username)
 	
 	return result
+}
+
+func GetUserByWhereIn(usernames []*string)[]*model.User {
+	var result []*model.User
+
+	for _,v := range usernames{
+		temp,_ := GetUserByUsername(*v)
+		result = append(result, temp)
+	}
+
+	return result
+}
+
+func GetUserByUsername(username string) (*model.User, error) {
+	var user *model.User
+
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	findOptions := options.FindOneOptions{}
+	cur := collection.FindOne(ctx, bson.D{
+		{"username", username},
+	}, &findOptions)
+	var result bson.M
+	err := cur.Decode(&result)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var friendList []string
+	for _, v := range result["friendList"].(primitive.A) {
+		friend := fmt.Sprintf("%v", v)
+		friendList = append(friendList, friend)
+	}
+
+	var lookingFor []string
+	for _, v := range result["lookingFor"].(primitive.A) {
+		item := fmt.Sprintf("%v", v)
+		lookingFor = append(lookingFor, item)
+	}
+
+	user = &model.User{
+		Username:       fmt.Sprintf("%v", result["username"]),
+		Email:          fmt.Sprintf("%v", result["email"]),
+		Role:           fmt.Sprintf("%v", result["role"]),
+		WhatsappNumber: fmt.Sprintf("%v", result["whatsappNumber"]),
+		HashedPassword: fmt.Sprintf("%v", result["hashedPassword"]),
+		ProfileImage:   fmt.Sprintf("%v", result["profileImage"]),
+		FriendList:     friendList,
+		LookingFor:     lookingFor,
+	}
+
+	return user, nil
 }

@@ -8,7 +8,8 @@ import (
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
-	"myapp/utils"
+
+	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 )
 
 func (r *mutationResolver) User(ctx context.Context) (*model.UserOps, error) {
@@ -19,8 +20,12 @@ func (r *mutationResolver) Commodity(ctx context.Context) (*model.CommodityOps, 
 	return &model.CommodityOps{}, nil
 }
 
+func (r *mutationResolver) Schedule(ctx context.Context) (*model.ScheduleOps, error) {
+	return &model.ScheduleOps{}, nil
+}
+
 func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*model.User, error) {
-	return utils.GetUserByUsername(username)
+	return service.GetUserByUsername(username)
 }
 
 func (r *queryResolver) Comodities(ctx context.Context, limit *int, page *int) (*model.ComodityPagination, error) {
@@ -32,6 +37,11 @@ func (r *queryResolver) Comodities(ctx context.Context, limit *int, page *int) (
 
 func (r *queryResolver) UsersByRole(ctx context.Context, role string) ([]*model.User, error) {
 	return service.GetUserByRole(role), nil
+}
+
+func (r *queryResolver) ScheduleByUser(ctx context.Context) ([]*model.Schedule, error) {
+	user := middleware.AuthContext(ctx)
+	return service.GetSchedule(user.Username), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

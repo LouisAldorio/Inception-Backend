@@ -6,10 +6,12 @@
 type Mutation {
     user: UserOps! @goField(forceResolver:true)
     commodity: CommodityOps! @goField(forceResolver:true)
+    schedule: ScheduleOps! @goField(forceResolver: true)
 }
 
 type Query {
     user_by_username(username: String!): User!
     comodities(limit: Int, page: Int): ComodityPagination!
     users_by_role(role: String!): [User!]!
+    schedule_by_user: [Schedule]! @goField(forceResolver: true)
 }

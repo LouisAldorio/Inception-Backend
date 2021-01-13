@@ -52,6 +52,18 @@ type NewComodity struct {
 	Images      []*string `json:"images"`
 }
 
+type NewSchedule struct {
+	ScheduleName          string    `json:"schedule_name"`
+	CommodityName         string    `json:"commodity_name"`
+	DealedUnit            string    `json:"dealed_unit"`
+	StartDate             string    `json:"start_date"`
+	EndDate               string    `json:"end_date"`
+	Day                   []*string `json:"day"`
+	StartTime             string    `json:"start_time"`
+	EndTime               string    `json:"end_time"`
+	InvolvedUsersUsername []*string `json:"involved_users_username"`
+}
+
 type NewUser struct {
 	Username        string  `json:"username"`
 	Email           string  `json:"email"`
@@ -59,6 +71,24 @@ type NewUser struct {
 	WhatsappNumber  *string `json:"whatsapp_number"`
 	Password        string  `json:"password"`
 	ConfirmPassword string  `json:"confirm_password"`
+}
+
+type Schedule struct {
+	ID                    string    `json:"id"`
+	ScheduleName          string    `json:"schedule_name"`
+	CommodityName         string    `json:"commodity_name"`
+	DealedUnit            string    `json:"dealed_unit"`
+	StartDate             string    `json:"start_date"`
+	EndDate               string    `json:"end_date"`
+	Day                   []*string `json:"day"`
+	StartTime             string    `json:"start_time"`
+	EndTime               string    `json:"end_time"`
+	InvolvedUsersUsername []*string `json:"involved_users_username"`
+	InvolvedUsers         []*User   `json:"involved_users"`
+}
+
+type ScheduleOps struct {
+	Create *Schedule `json:"create"`
 }
 
 type User struct {

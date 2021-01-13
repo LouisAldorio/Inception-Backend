@@ -9,7 +9,6 @@ import (
 	"myapp/graph/generated"
 	"myapp/graph/model"
 	"myapp/service"
-	"myapp/utils"
 
 	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 )
@@ -28,7 +27,7 @@ func (r *userOpsResolver) Login(ctx context.Context, obj *model.UserOps, input m
 
 func (r *userOpsResolver) Update(ctx context.Context, obj *model.UserOps, input model.EditUser) (*model.User, error) {
 	userClaim := middleware.AuthContext(ctx)
-	user, _ := utils.GetUserByUsername(userClaim.Username)
+	user, _ := service.GetUserByUsername(userClaim.Username)
 	return service.UpdateUserProfile(user, input), nil
 }
 

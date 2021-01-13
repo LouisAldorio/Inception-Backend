@@ -136,7 +136,7 @@ func CommodityCreate(ctx context.Context, input *model.NewComodity, username str
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Comodities")
 
-	_, err := collection.InsertOne(ctx, bson.D{
+	cur, err := collection.InsertOne(ctx, bson.D{
 		{"name", input.Name},
 		{"minPurchase", input.MinPurchase},
 		{"unitPrice", input.UnitPrice},
@@ -151,6 +151,7 @@ func CommodityCreate(ctx context.Context, input *model.NewComodity, username str
 	}
 
 	result := model.Comodity{
+		ID:          cur.InsertedID.(string),
 		Name:        input.Name,
 		Image:       input.Images,
 		UnitPrice:   input.UnitPrice,
