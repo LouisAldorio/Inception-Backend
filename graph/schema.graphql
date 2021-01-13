@@ -14,4 +14,5 @@ type Query {
     comodities(limit: Int, page: Int): ComodityPagination!
     users_by_role(role: String!): [User!]!
     schedule_by_user: [Schedule]! @goField(forceResolver: true)
+    friend_list: [Friend]! @goField(forceResolver: true)
 }

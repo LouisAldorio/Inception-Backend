@@ -39,6 +39,7 @@ type ResolverRoot interface {
 	CommodityOps() CommodityOpsResolver
 	Comodity() ComodityResolver
 	ComodityPagination() ComodityPaginationResolver
+	Friend() FriendResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 	Schedule() ScheduleResolver
@@ -76,6 +77,11 @@ type ComplexityRoot struct {
 		TotalItem func(childComplexity int) int
 	}
 
+	Friend struct {
+		User     func(childComplexity int) int
+		Username func(childComplexity int) int
+	}
+
 	LoginResponse struct {
 		AccessToken func(childComplexity int) int
 		User        func(childComplexity int) int
@@ -89,6 +95,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Comodities     func(childComplexity int, limit *int, page *int) int
+		FriendList     func(childComplexity int) int
 		ScheduleByUser func(childComplexity int) int
 		UserByUsername func(childComplexity int, username string) int
 		UsersByRole    func(childComplexity int, role string) int
@@ -143,6 +150,9 @@ type ComodityPaginationResolver interface {
 	TotalItem(ctx context.Context, obj *model.ComodityPagination) (int, error)
 	Nodes(ctx context.Context, obj *model.ComodityPagination) ([]*model.Comodity, error)
 }
+type FriendResolver interface {
+	User(ctx context.Context, obj *model.Friend) (*model.User, error)
+}
 type MutationResolver interface {
 	User(ctx context.Context) (*model.UserOps, error)
 	Commodity(ctx context.Context) (*model.CommodityOps, error)
@@ -153,6 +163,7 @@ type QueryResolver interface {
 	Comodities(ctx context.Context, limit *int, page *int) (*model.ComodityPagination, error)
 	UsersByRole(ctx context.Context, role string) ([]*model.User, error)
 	ScheduleByUser(ctx context.Context) ([]*model.Schedule, error)
+	FriendList(ctx context.Context) ([]*model.Friend, error)
 }
 type ScheduleResolver interface {
 	InvolvedUsers(ctx context.Context, obj *model.Schedule) ([]*model.User, error)
@@ -300,6 +311,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ComodityPagination.TotalItem(childComplexity), true
 
+	case "Friend.user":
+		if e.complexity.Friend.User == nil {
+			break
+		}
+
+		return e.complexity.Friend.User(childComplexity), true
+
+	case "Friend.username":
+		if e.complexity.Friend.Username == nil {
+			break
+		}
+
+		return e.complexity.Friend.Username(childComplexity), true
+
 	case "LoginResponse.access_token":
 		if e.complexity.LoginResponse.AccessToken == nil {
 			break
@@ -346,6 +371,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Comodities(childComplexity, args["limit"].(*int), args["page"].(*int)), true
+
+	case "Query.friend_list":
+		if e.complexity.Query.FriendList == nil {
+			break
+		}
+
+		return e.complexity.Query.FriendList(childComplexity), true
 
 	case "Query.schedule_by_user":
 		if e.complexity.Query.ScheduleByUser == nil {
@@ -674,6 +706,10 @@ type CommodityOps {
     create(input: NewComodity): Comodity! @goField(forceResolver:true)
     update(input: NewComodity): Comodity! @goField(forceResolver:true)
 }`, BuiltIn: false},
+	{Name: "graph/friend.graphql", Input: `type Friend {
+    username: String!
+    user: User! @goField(forceResolver: true)
+}`, BuiltIn: false},
 	{Name: "graph/schedule.graphql", Input: `type Schedule{
     id: String!
     schedule_name: String!
@@ -719,6 +755,7 @@ type Query {
     comodities(limit: Int, page: Int): ComodityPagination!
     users_by_role(role: String!): [User!]!
     schedule_by_user: [Schedule]! @goField(forceResolver: true)
+    friend_list: [Friend]! @goField(forceResolver: true)
 }
 `, BuiltIn: false},
 	{Name: "graph/user.graphql", Input: `# directive @hasRole(role: String!) on FIELD_DEFINITION
@@ -1540,6 +1577,76 @@ func (ec *executionContext) _ComodityPagination_nodes(ctx context.Context, field
 	return ec.marshalNComodity2ᚕᚖmyappᚋgraphᚋmodelᚐComodityᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Friend_username(ctx context.Context, field graphql.CollectedField, obj *model.Friend) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Friend",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Username, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Friend_user(ctx context.Context, field graphql.CollectedField, obj *model.Friend) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Friend",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Friend().User(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖmyappᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _LoginResponse_access_token(ctx context.Context, field graphql.CollectedField, obj *model.LoginResponse) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1874,6 +1981,41 @@ func (ec *executionContext) _Query_schedule_by_user(ctx context.Context, field g
 	res := resTmp.([]*model.Schedule)
 	fc.Result = res
 	return ec.marshalNSchedule2ᚕᚖmyappᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_friend_list(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FriendList(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Friend)
+	fc.Result = res
+	return ec.marshalNFriend2ᚕᚖmyappᚋgraphᚋmodelᚐFriend(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4423,6 +4565,47 @@ func (ec *executionContext) _ComodityPagination(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var friendImplementors = []string{"Friend"}
+
+func (ec *executionContext) _Friend(ctx context.Context, sel ast.SelectionSet, obj *model.Friend) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, friendImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Friend")
+		case "username":
+			out.Values[i] = ec._Friend_username(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "user":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Friend_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var loginResponseImplementors = []string{"LoginResponse"}
 
 func (ec *executionContext) _LoginResponse(ctx context.Context, sel ast.SelectionSet, obj *model.LoginResponse) graphql.Marshaler {
@@ -4562,6 +4745,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_schedule_by_user(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "friend_list":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_friend_list(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5196,6 +5393,43 @@ func (ec *executionContext) unmarshalNEditUser2myappᚋgraphᚋmodelᚐEditUser(
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNFriend2ᚕᚖmyappᚋgraphᚋmodelᚐFriend(ctx context.Context, sel ast.SelectionSet, v []*model.Friend) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOFriend2ᚖmyappᚋgraphᚋmodelᚐFriend(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5733,6 +5967,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) marshalOFriend2ᚖmyappᚋgraphᚋmodelᚐFriend(ctx context.Context, sel ast.SelectionSet, v *model.Friend) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Friend(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {

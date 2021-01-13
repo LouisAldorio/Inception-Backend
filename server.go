@@ -9,8 +9,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 	"github.com/LouisAldorio/Testing-early-injection-directive/directives"
+	"github.com/LouisAldorio/Testing-early-injection-directive/middleware"
 	"github.com/go-chi/chi"
 	"github.com/rs/cors"
 )
@@ -18,6 +18,7 @@ import (
 const defaultPort = "8085"
 
 func main() {
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort

@@ -44,6 +44,11 @@ func (r *queryResolver) ScheduleByUser(ctx context.Context) ([]*model.Schedule, 
 	return service.GetSchedule(user.Username), nil
 }
 
+func (r *queryResolver) FriendList(ctx context.Context) ([]*model.Friend, error) {
+	user := middleware.AuthContext(ctx)
+	return service.GetFriendDetailByUsername(user.Username), nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

@@ -33,6 +33,11 @@ type EditUser struct {
 	LookingFor     []string `json:"looking_for"`
 }
 
+type Friend struct {
+	Username string `json:"username"`
+	User     *User  `json:"user"`
+}
+
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 	User        *User  `json:"user"`
