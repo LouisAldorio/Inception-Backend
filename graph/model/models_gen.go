@@ -38,6 +38,10 @@ type Friend struct {
 	User     *User  `json:"user"`
 }
 
+type FriendOps struct {
+	Add *User `json:"add"`
+}
+
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
 	User        *User  `json:"user"`

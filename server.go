@@ -19,6 +19,8 @@ const defaultPort = "8085"
 
 func main() {
 
+	// service.AddFriend([]string{"louisaldorio","temari","sakura"},"giselia")
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort

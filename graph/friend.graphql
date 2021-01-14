@@ -2,3 +2,7 @@ type Friend {
     username: String!
     user: User! @goField(forceResolver: true)
 }
+
+type FriendOps {
+    add(friends: [String]!): User! @goField(forceResolver: true)
+}
