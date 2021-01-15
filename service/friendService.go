@@ -70,11 +70,13 @@ func UpdateAddedOrRemoveUserFriendlist(username string,friend string, remove boo
 			"$set": bson.M{"friendList": newFriendArray},
 		}
 	}else {
+		fmt.Println(userDetail.FriendList,friend)
 		for _,v := range userDetail.FriendList{
 			if v != friend{
 				newFriendArray = append(newFriendArray, v)
 			}
 		}
+		fmt.Println(newFriendArray)
 		update = bson.M{
 			"$set": bson.M{"friendList": newFriendArray},
 		}
@@ -107,6 +109,7 @@ func AddFriend(friends []*string,username string) *model.User{
 		nonPointerFriends = append(nonPointerFriends, *v)
 	}
 
+
 	if len(prevFriendList) < len(nonPointerFriends){
 		//add friend
 		newFriend := utils.Difference(nonPointerFriends,prevFriendList)
@@ -114,8 +117,8 @@ func AddFriend(friends []*string,username string) *model.User{
 
 	}else if len(prevFriendList) > len(nonPointerFriends){
 		//remove friend
-		newFriend := utils.Difference(nonPointerFriends,prevFriendList)
-		UpdateAddedOrRemoveUserFriendlist(newFriend[0],username,true)
+		removedFriend := utils.Difference(prevFriendList,nonPointerFriends)
+		UpdateAddedOrRemoveUserFriendlist(removedFriend[0],username,true)
 	}
 
 	//update my own friendList
