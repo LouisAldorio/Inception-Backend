@@ -61,7 +61,7 @@ func UpdateAddedOrRemoveUserFriendlist(username string,friend string, remove boo
 	newFriendArray := []string{}
 
 	var update primitive.M
-	if remove {
+	if !remove {
 		for _,v := range userDetail.FriendList{
 			newFriendArray = append(newFriendArray, v)
 		}
