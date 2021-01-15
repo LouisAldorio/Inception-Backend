@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"myapp/config"
 	"myapp/graph/model"
+	"myapp/utils"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -47,6 +48,49 @@ func GetFriendDetailByUsername(username string) []*model.Friend {
 	return result
 }
 
+func UpdateAddedOrRemoveUserFriendlist(username string,friend string, remove bool){
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Users")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	userDetail,_ := GetUserByUsername(username) 
+	filter := bson.M{"username": username}
+
+	newFriendArray := []string{}
+
+	var update primitive.M
+	if remove {
+		for _,v := range userDetail.FriendList{
+			newFriendArray = append(newFriendArray, v)
+		}
+		newFriendArray = append(newFriendArray, friend)
+		update = bson.M{
+			"$set": bson.M{"friendList": newFriendArray},
+		}
+	}else {
+		for _,v := range userDetail.FriendList{
+			if v != friend{
+				newFriendArray = append(newFriendArray, v)
+			}
+		}
+		update = bson.M{
+			"$set": bson.M{"friendList": newFriendArray},
+		}
+	}
+	
+	after := options.After
+	opt := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+
+	result := collection.FindOneAndUpdate(ctx, filter, update, &opt)
+	if result.Err() != nil {
+		fmt.Println(result.Err())
+	}
+}
+
 func AddFriend(friends []*string,username string) *model.User{
 	client := config.MongodbConnect()
 	collection := client.Database("Inception").Collection("Users")
@@ -54,6 +98,27 @@ func AddFriend(friends []*string,username string) *model.User{
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	//update to friend
+	userDetail,_ := GetUserByUsername(username) 
+	prevFriendList := userDetail.FriendList
+
+	nonPointerFriends := []string{}
+	for _,v := range friends{
+		nonPointerFriends = append(nonPointerFriends, *v)
+	}
+
+	if len(prevFriendList) < len(nonPointerFriends){
+		//add friend
+		newFriend := utils.Difference(nonPointerFriends,prevFriendList)
+		UpdateAddedOrRemoveUserFriendlist(newFriend[0],username,false)
+
+	}else if len(prevFriendList) > len(nonPointerFriends){
+		//remove friend
+		newFriend := utils.Difference(nonPointerFriends,prevFriendList)
+		UpdateAddedOrRemoveUserFriendlist(newFriend[0],username,true)
+	}
+
+	//update my own friendList
 	filter := bson.M{"username": username}
 
 	update := bson.M{
