@@ -27,6 +27,7 @@ func (r *mutationResolver) Schedule(ctx context.Context) (*model.ScheduleOps, er
 func (r *mutationResolver) Friends(ctx context.Context) (*model.FriendOps, error) {
 	return &model.FriendOps{}, nil
 }
+
 func (r *queryResolver) UserByUsername(ctx context.Context, username string) (*model.User, error) {
 	return service.GetUserByUsername(username)
 }

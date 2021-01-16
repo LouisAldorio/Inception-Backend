@@ -24,6 +24,20 @@ input NewSchedule {
     involved_users_username: [String]!
 }
 
+input EditSchedule {
+    id: String!
+    schedule_name: String!
+    commodity_name: String!
+    dealed_unit: String!
+    start_date: String!
+    end_date: String!
+    day: [String]!
+    start_time: String!
+    end_time: String!
+}
+
 type ScheduleOps {
     create(input: NewSchedule!): Schedule! @goField(forceResolver: true)
+    update(input: EditSchedule!): Schedule! @goField(forceResolver: true)
+    delete(id: String!): Boolean! @goField(forceResolver: true)
 }

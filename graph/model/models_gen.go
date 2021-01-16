@@ -26,6 +26,18 @@ type ComodityPagination struct {
 	Nodes     []*Comodity `json:"nodes"`
 }
 
+type EditSchedule struct {
+	ID            string    `json:"id"`
+	ScheduleName  string    `json:"schedule_name"`
+	CommodityName string    `json:"commodity_name"`
+	DealedUnit    string    `json:"dealed_unit"`
+	StartDate     string    `json:"start_date"`
+	EndDate       string    `json:"end_date"`
+	Day           []*string `json:"day"`
+	StartTime     string    `json:"start_time"`
+	EndTime       string    `json:"end_time"`
+}
+
 type EditUser struct {
 	Email          string   `json:"email"`
 	WhatsappNumber string   `json:"whatsapp_number"`
@@ -98,6 +110,8 @@ type Schedule struct {
 
 type ScheduleOps struct {
 	Create *Schedule `json:"create"`
+	Update *Schedule `json:"update"`
+	Delete bool      `json:"delete"`
 }
 
 type User struct {

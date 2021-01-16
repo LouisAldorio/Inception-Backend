@@ -100,3 +100,89 @@ func CreateSchedule(ctx context.Context, input model.NewSchedule) *model.Schedul
 	}
 	return &result
 }
+
+func UpdateSchedule(ctx context.Context, input model.EditSchedule) *model.Schedule {
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Schedule")
+
+	idPrimitive, err := primitive.ObjectIDFromHex(input.ID)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	filter := bson.M{"_id": idPrimitive}
+
+	update := bson.M{
+		"$set": bson.M{
+			"scheduleName":  input.ScheduleName,
+			"commodityName": input.CommodityName,
+			"dealedUnit":    input.DealedUnit,
+			"startDate":     input.StartDate,
+			"endDate":       input.EndDate,
+			"days":          input.Day,
+			"startTime":     input.StartTime,
+			"endTime":       input.EndTime,
+		},
+	}
+
+	after := options.After
+	opt := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+	}
+
+	result := collection.FindOneAndUpdate(ctx, filter, update, &opt)
+	if result.Err() != nil {
+		fmt.Println(result.Err())
+	}
+
+	doc := bson.M{}
+	decodeErr := result.Decode(&doc)
+	if decodeErr != nil {
+		fmt.Println(decodeErr)
+	}
+
+	var days []*string
+	for _, v := range doc["days"].(primitive.A) {
+		day := fmt.Sprintf("%v", v)
+		days = append(days, &day)
+	}
+
+	var usersUsername []*string
+	for _, v := range doc["involvedUsers"].(primitive.A) {
+		username := fmt.Sprintf("%v", v)
+		usersUsername = append(usersUsername, &username)
+	}
+
+	return &model.Schedule{
+		ID:                    doc["_id"].(primitive.ObjectID).Hex(),
+		ScheduleName:          fmt.Sprintf("%v", doc["scheduleName"]),
+		CommodityName:         fmt.Sprintf("%v", doc["commodityName"]),
+		DealedUnit:            fmt.Sprintf("%v", doc["dealedUnit"]),
+		StartDate:             fmt.Sprintf("%v", doc["startDate"]),
+		EndDate:               fmt.Sprintf("%v", doc["endDate"]),
+		StartTime:             fmt.Sprintf("%v", doc["startTime"]),
+		EndTime:               fmt.Sprintf("%v", doc["endTime"]),
+		Day:                   days,
+		InvolvedUsersUsername: usersUsername,
+	}
+}
+
+func DeleteSchedule(ctx context.Context, id string) bool {
+	client := config.MongodbConnect()
+	collection := client.Database("Inception").Collection("Schedule")
+
+	idPrimitive, err := primitive.ObjectIDFromHex(id)
+
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": idPrimitive})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("DeleteOne removed %v document(s)\n", result.DeletedCount)
+
+	if result.DeletedCount > 0 {
+		return true
+	} else {
+		return false
+	}
+}

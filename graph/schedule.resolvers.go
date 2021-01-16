@@ -18,6 +18,14 @@ func (r *scheduleOpsResolver) Create(ctx context.Context, obj *model.ScheduleOps
 	return service.CreateSchedule(ctx, input), nil
 }
 
+func (r *scheduleOpsResolver) Update(ctx context.Context, obj *model.ScheduleOps, input model.EditSchedule) (*model.Schedule, error) {
+	return service.UpdateSchedule(ctx, input), nil
+}
+
+func (r *scheduleOpsResolver) Delete(ctx context.Context, obj *model.ScheduleOps, id string) (bool, error) {
+	return service.DeleteSchedule(ctx, id), nil
+}
+
 // Schedule returns generated.ScheduleResolver implementation.
 func (r *Resolver) Schedule() generated.ScheduleResolver { return &scheduleResolver{r} }
 

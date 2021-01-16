@@ -123,6 +123,8 @@ type ComplexityRoot struct {
 
 	ScheduleOps struct {
 		Create func(childComplexity int, input model.NewSchedule) int
+		Delete func(childComplexity int, id string) int
+		Update func(childComplexity int, input model.EditSchedule) int
 	}
 
 	User struct {
@@ -180,6 +182,8 @@ type ScheduleResolver interface {
 }
 type ScheduleOpsResolver interface {
 	Create(ctx context.Context, obj *model.ScheduleOps, input model.NewSchedule) (*model.Schedule, error)
+	Update(ctx context.Context, obj *model.ScheduleOps, input model.EditSchedule) (*model.Schedule, error)
+	Delete(ctx context.Context, obj *model.ScheduleOps, id string) (bool, error)
 }
 type UserResolver interface {
 	Products(ctx context.Context, obj *model.User) ([]*model.Comodity, error)
@@ -528,6 +532,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ScheduleOps.Create(childComplexity, args["input"].(model.NewSchedule)), true
 
+	case "ScheduleOps.delete":
+		if e.complexity.ScheduleOps.Delete == nil {
+			break
+		}
+
+		args, err := ec.field_ScheduleOps_delete_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.ScheduleOps.Delete(childComplexity, args["id"].(string)), true
+
+	case "ScheduleOps.update":
+		if e.complexity.ScheduleOps.Update == nil {
+			break
+		}
+
+		args, err := ec.field_ScheduleOps_update_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.ScheduleOps.Update(childComplexity, args["input"].(model.EditSchedule)), true
+
 	case "User.email":
 		if e.complexity.User.Email == nil {
 			break
@@ -769,8 +797,22 @@ input NewSchedule {
     involved_users_username: [String]!
 }
 
+input EditSchedule {
+    id: String!
+    schedule_name: String!
+    commodity_name: String!
+    dealed_unit: String!
+    start_date: String!
+    end_date: String!
+    day: [String]!
+    start_time: String!
+    end_time: String!
+}
+
 type ScheduleOps {
     create(input: NewSchedule!): Schedule! @goField(forceResolver: true)
+    update(input: EditSchedule!): Schedule! @goField(forceResolver: true)
+    delete(id: String!): Boolean! @goField(forceResolver: true)
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphql", Input: `# directive @goField(forceResolver: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
@@ -990,6 +1032,36 @@ func (ec *executionContext) field_ScheduleOps_create_args(ctx context.Context, r
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNNewSchedule2myappᚋgraphᚋmodelᚐNewSchedule(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_ScheduleOps_delete_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_ScheduleOps_update_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.EditSchedule
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNEditSchedule2myappᚋgraphᚋmodelᚐEditSchedule(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2642,6 +2714,90 @@ func (ec *executionContext) _ScheduleOps_create(ctx context.Context, field graph
 	return ec.marshalNSchedule2ᚖmyappᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _ScheduleOps_update(ctx context.Context, field graphql.CollectedField, obj *model.ScheduleOps) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ScheduleOps",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_ScheduleOps_update_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ScheduleOps().Update(rctx, obj, args["input"].(model.EditSchedule))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Schedule)
+	fc.Result = res
+	return ec.marshalNSchedule2ᚖmyappᚋgraphᚋmodelᚐSchedule(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _ScheduleOps_delete(ctx context.Context, field graphql.CollectedField, obj *model.ScheduleOps) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "ScheduleOps",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_ScheduleOps_delete_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ScheduleOps().Delete(rctx, obj, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _User_profile_image(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4230,6 +4386,90 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputEditSchedule(ctx context.Context, obj interface{}) (model.EditSchedule, error) {
+	var it model.EditSchedule
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "schedule_name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("schedule_name"))
+			it.ScheduleName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "commodity_name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commodity_name"))
+			it.CommodityName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dealed_unit":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dealed_unit"))
+			it.DealedUnit, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "start_date":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start_date"))
+			it.StartDate, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "end_date":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end_date"))
+			it.EndDate, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "day":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("day"))
+			it.Day, err = ec.unmarshalNString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "start_time":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start_time"))
+			it.StartTime, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "end_time":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end_time"))
+			it.EndTime, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputEditUser(ctx context.Context, obj interface{}) (model.EditUser, error) {
 	var it model.EditUser
 	var asMap = obj.(map[string]interface{})
@@ -5057,6 +5297,34 @@ func (ec *executionContext) _ScheduleOps(ctx context.Context, sel ast.SelectionS
 				}
 				return res
 			})
+		case "update":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ScheduleOps_update(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "delete":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ScheduleOps_delete(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5553,6 +5821,11 @@ func (ec *executionContext) marshalNComodityPagination2ᚖmyappᚋgraphᚋmodel�
 		return graphql.Null
 	}
 	return ec._ComodityPagination(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEditSchedule2myappᚋgraphᚋmodelᚐEditSchedule(ctx context.Context, v interface{}) (model.EditSchedule, error) {
+	res, err := ec.unmarshalInputEditSchedule(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNEditUser2myappᚋgraphᚋmodelᚐEditUser(ctx context.Context, v interface{}) (model.EditUser, error) {
