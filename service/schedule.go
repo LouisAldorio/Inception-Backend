@@ -23,6 +23,8 @@ func GetSchedule(username string) []*model.Schedule {
 	defer cancel()
 
 	findOptions := options.FindOptions{}
+	findOptions.SetSort(bson.D{{"_id", -1}})
+
 	cur, err := collection.Find(ctx, bson.D{
 		{"involvedUsers", bson.M{"$elemMatch": bson.D{{"$eq", username}}}},
 	}, &findOptions)
