@@ -1,10 +1,6 @@
 github.com/99designs/gqlgen v0.13.0 h1:haLTcUp3Vwp80xMVEg5KRNwzfUrgFdRmtBY8fuB8scA=
 github.com/99designs/gqlgen v0.13.0/go.mod h1:NV130r6f4tpRWuAI+zsrSdooO/eWUv+Gyyoi3rEfXIk=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/LouisAldorio/Testing-early-injection-directive v1.0.1 h1:j0omteoij6ai+WiR53SDjQQWq5KbladV+yyWEEopLZU=
-github.com/LouisAldorio/Testing-early-injection-directive v1.0.1/go.mod h1:1pSAqbK7HLLuGJzIi7njFZHBMwTT9vDE9RGE+fwm9Qc=
-github.com/LouisAldorio/Testing-early-injection-directive v1.0.2 h1:VnF/MN7bKDKQ0rntp2Yi4axltkoL0floZhR451jEd+k=
-github.com/LouisAldorio/Testing-early-injection-directive v1.0.2/go.mod h1:ld8a3rcOHuNFoIQ8fCIWJm4uy0hoy/K6UOaV6g4TN9s=
 github.com/LouisAldorio/Testing-early-injection-directive v1.0.3 h1:S/hQk5Qn0VW5cDCygawYRyQ1F70yZAPGM5v96LrLs8w=
 github.com/LouisAldorio/Testing-early-injection-directive v1.0.3/go.mod h1:ld8a3rcOHuNFoIQ8fCIWJm4uy0hoy/K6UOaV6g4TN9s=
 github.com/PuerkitoBio/goquery v1.5.1/go.mod h1:GsLWisAFVj4WgDibEWF4pvYnkVQBpKBKeU+7zCJoLcc=

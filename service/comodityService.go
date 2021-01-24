@@ -151,7 +151,7 @@ func CommodityCreate(ctx context.Context, input *model.NewComodity, username str
 	}
 
 	result := model.Comodity{
-		ID:          cur.InsertedID.(string),
+		ID:          cur.InsertedID.(primitive.ObjectID).Hex(),
 		Name:        input.Name,
 		Image:       input.Images,
 		UnitPrice:   input.UnitPrice,
